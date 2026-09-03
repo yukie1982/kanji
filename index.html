@@ -80,12 +80,20 @@ nav.bottom button.gray.cur{background:#fff;box-shadow:0 4px 0 var(--line);border
 .stamp{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8rem;pointer-events:none;opacity:0;transition:.15s}
 .stamp.show{opacity:.85}
 .qwrap{position:relative}
+.nb{display:inline-block;font-size:.95rem;background:#ffe3e6;color:var(--ng-d);border-radius:999px;padding:4px 12px;font-weight:600;white-space:nowrap}
+.item.nigate{border-color:#f3a3ab;background:#fff5f6}
+.item.nigate .k{color:var(--ng-d)}
+.q-nb{text-align:center;margin-top:6px}
+.q-nb .nb{font-size:1.1rem;padding:6px 16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}
+.chip{font-family:var(--kfont);font-size:1.4rem;font-weight:600;background:#fff5f6;border:2px solid #f3a3ab;color:var(--ng-d);border-radius:12px;padding:4px 12px}
+.chip small{font-family:var(--ufont);font-size:.8rem;font-weight:400;margin-left:4px}
 </style>
 </head>
 <body>
 <header>
   <h1>✏️ かんじ ふくしゅう</h1>
-  <span class="ver">v1</span>
+  <span class="ver">v2</span>
 </header>
 
 <main>
@@ -95,6 +103,12 @@ nav.bottom button.gray.cur{background:#fff;box-shadow:0 4px 0 var(--line);border
     <div class="label">とうろくした かんじ</div>
     <div class="result-num" id="home-count">0<span>こ</span></div>
     <div class="note" id="home-miss" style="text-align:center"></div>
+  </div>
+
+  <div class="card" id="home-nigate" style="display:none;border-color:#f3a3ab">
+    <div class="label" style="color:var(--ng-d)">🔥 なんども まちがえている かんじ</div>
+    <div class="chips" id="nigate-chips"></div>
+    <button class="ng" id="btn-nigate" style="width:100%;margin-top:14px">🔥 にがてだけ れんしゅう</button>
   </div>
 
   <div class="stack">
@@ -115,6 +129,7 @@ nav.bottom button.gray.cur{background:#fff;box-shadow:0 4px 0 var(--line);border
     <div class="note">
       <p>「とうろく」タブで、まちがえた漢字を入れます。<b>ことば</b>（例：暑い）と<b>よみがな</b>（例：あつい）は必ず、<b>れい文</b>はあってもなくてもOKです。</p>
       <p>「よみ」は漢字を見て読みを答えるモード、「かき」は読みを見て漢字をノートに書くモードです。カードをタップすると答えが出るので、「できた」「まだ」で自分で判定します。</p>
+      <p>🔥「にがて」マークは、2回以上まちがえて、まだ「できた」の回数が追いついていない漢字につきます。「できた」を重ねるとマークは消えます。</p>
       <p>データはこの端末のブラウザ内に保存されます。別の端末に移すときは「とうろく」タブの一番下にある「データのうつしかえ」を使ってください。</p>
     </div>
   </details>
@@ -130,6 +145,7 @@ nav.bottom button.gray.cur{background:#fff;box-shadow:0 4px 0 var(--line);border
       <div id="q-front">
         <div class="tag" id="q-tag">よみは？</div>
         <div class="big" id="q-main">暑い</div>
+        <div class="q-nb" id="q-nb"></div>
         <div class="hint" id="q-hint"></div>
         <div class="tap">タップして こたえを見る</div>
       </div>
@@ -230,6 +246,9 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 function norm(s){return (s||'').replace(/[\s　]+/g,' ').trim();}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function isNigate(c){return (c.miss||0)>=2&&(c.miss||0)>=(c.ok||0);}
+function nigateCards(){return db.cards.filter(isNigate).sort((a,b)=>((b.miss||0)-(b.ok||0))-((a.miss||0)-(a.ok||0)));}
+function nbHtml(c){return isNigate(c)?`<span class="nb">🔥 にがて ×${c.miss}</span>`:'';}
 function missCards(){return db.cards.filter(c=>(c.miss||0)>(c.ok||0)||c.last==='ng');}
 
 // ---- 画面切替 ----
@@ -252,7 +271,11 @@ function renderHome(){
   $('#tg-shuffle .switch').classList.toggle('on',!!settings.shuffle);
   $('#tg-miss .switch').classList.toggle('on',!!settings.onlyMiss);
   $('#btn-start').disabled=db.cards.length===0;
+  const ng=nigateCards();
+  $('#home-nigate').style.display=ng.length?'':'none';
+  $('#nigate-chips').innerHTML=ng.slice(0,8).map(c=>`<span class="chip">${esc(c.kanji)}<small>×${c.miss}</small></span>`).join('')+(ng.length>8?`<span class="chip" style="background:none;border-color:transparent">ほか${ng.length-8}こ</span>`:'');
 }
+$('#btn-nigate').addEventListener('click',()=>startQuiz(nigateCards().map(c=>c.id)));
 $$('#mode-seg button').forEach(b=>b.addEventListener('click',()=>{settings.mode=b.dataset.mode;save();renderHome();}));
 $('#tg-shuffle').addEventListener('click',()=>{settings.shuffle=!settings.shuffle;save();renderHome();});
 $('#tg-miss').addEventListener('click',()=>{settings.onlyMiss=!settings.onlyMiss;save();renderHome();});
@@ -285,6 +308,7 @@ function renderQ(){
   $('#q-tag').textContent=yomiMode?'よみは？':'かんじで 書くと？';
   $('#q-main').textContent=yomiMode?c.kanji:c.yomi;
   $('#q-hint').textContent=yomiMode?'':maskHint(c);
+  $('#q-nb').innerHTML=nbHtml(c);
   $('#a-main').textContent=yomiMode?c.yomi:c.kanji;
   $('#a-sub').textContent=yomiMode?c.kanji:c.yomi;
   $('#a-hint').textContent=c.hint||'';
@@ -323,7 +347,7 @@ function finish(){
   $('#r-title').textContent=ng===0&&ok>0?'🎉 ぜんぶ できた！':ok>=ng?'👍 いいちょうし！':'💪 もういちど がんばろう';
   const list=$('#r-list');list.innerHTML='';
   quiz.ng.forEach(id=>{const c=db.cards.find(x=>x.id===id);if(!c)return;
-    list.insertAdjacentHTML('beforeend',`<div class="item"><span class="k">${esc(c.kanji)}</span><span class="y">${esc(c.yomi)}</span><span class="m">✕ まだ</span></div>`);});
+    list.insertAdjacentHTML('beforeend',`<div class="item${isNigate(c)?' nigate':''}"><span class="k">${esc(c.kanji)}</span><span class="y">${esc(c.yomi)}</span><span class="m">${isNigate(c)?'🔥 にがて ×'+c.miss:'✕ まだ'}</span></div>`);});
   $('#btn-retry-miss').style.display=ng?'':'none';
   show('result');
 }
@@ -359,10 +383,10 @@ $('#btn-bulk').addEventListener('click',()=>{
 function renderList(){
   const list=$('#card-list');
   $('#list-count').textContent=db.cards.length+' こ';
-  $('#btn-sort').textContent='ならびかえ：'+(sortNew?'あたらしい順':'まだが多い順');
+  $('#btn-sort').textContent='ならびかえ：'+(sortNew?'あたらしい順':'にがて順');
   if(!db.cards.length){list.innerHTML='<div class="empty">まだ とうろくが ありません。<br>上の欄から 入れてね。</div>';return;}
   const cards=db.cards.slice().sort((a,b)=>sortNew?b.created-a.created:((b.miss||0)-(b.ok||0))-((a.miss||0)-(a.ok||0)));
-  list.innerHTML=cards.map(c=>`<div class="item" data-id="${c.id}"><span class="k">${esc(c.kanji)}</span><div><div class="y">${esc(c.yomi)}</div>${c.hint?`<div class="y" style="font-size:.9rem">${esc(c.hint)}</div>`:''}</div><span class="m">${c.miss?'✕'+c.miss:''}${c.ok?' <span style="color:var(--ok)">◯'+c.ok+'</span>':''}</span><button class="del" aria-label="けす">🗑</button></div>`).join('');
+  list.innerHTML=cards.map(c=>`<div class="item${isNigate(c)?' nigate':''}" data-id="${c.id}"><span class="k">${esc(c.kanji)}</span><div><div class="y">${esc(c.yomi)}</div>${c.hint?`<div class="y" style="font-size:.9rem">${esc(c.hint)}</div>`:''}${isNigate(c)?`<div style="margin-top:4px">${nbHtml(c)}</div>`:''}</div><span class="m">${c.miss?'✕'+c.miss:''}${c.ok?' <span style="color:var(--ok)">◯'+c.ok+'</span>':''}</span><button class="del" aria-label="けす">🗑</button></div>`).join('');
 }
 $('#btn-sort').addEventListener('click',()=>{sortNew=!sortNew;renderList();});
 $('#card-list').addEventListener('click',e=>{
