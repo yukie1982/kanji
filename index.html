@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#fff7e6">
+<title>かんじ ふくしゅう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff7e6; --card:#ffffff; --ink:#2b2b2b; --sub:#6b6b6b;
+  --line:#e8dcc4; --accent:#ff8c42; --accent-d:#e0722b;
+  --ok:#2fa36b; --ok-d:#23854f; --ng:#e25563; --ng-d:#c23f4d;
+  --blue:#3d7dd8; --blue-d:#2f64b0; --gray:#d9d3c5;
+  --kfont:"Klee One","UD Digi Kyokasho N-R","UD デジタル 教科書体 N-R","Hiragino Mincho ProN","Yu Mincho",serif;
+  --ufont:"Klee One","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--ufont);font-size:18px;line-height:1.5;-webkit-text-size-adjust:100%}
+body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
+button{font-family:inherit;font-size:1.1rem;border:none;border-radius:16px;padding:14px 18px;min-height:56px;cursor:pointer;color:#fff;background:var(--accent);box-shadow:0 4px 0 var(--accent-d);font-weight:600;touch-action:manipulation}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--accent-d)}
+button.ok{background:var(--ok);box-shadow:0 4px 0 var(--ok-d)}button.ok:active{box-shadow:0 1px 0 var(--ok-d)}
+button.ng{background:var(--ng);box-shadow:0 4px 0 var(--ng-d)}button.ng:active{box-shadow:0 1px 0 var(--ng-d)}
+button.blue{background:var(--blue);box-shadow:0 4px 0 var(--blue-d)}button.blue:active{box-shadow:0 1px 0 var(--blue-d)}
+button.gray{background:var(--gray);color:var(--ink);box-shadow:0 4px 0 #b8b0a0}button.gray:active{box-shadow:0 1px 0 #b8b0a0}
+button.small{min-height:44px;padding:8px 14px;font-size:1rem;border-radius:12px}
+button:disabled{opacity:.4;pointer-events:none}
+input,textarea{font-family:inherit;font-size:1.3rem;width:100%;padding:12px 14px;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+input:focus,textarea:focus{outline:none;border-color:var(--accent)}
+textarea{min-height:120px;resize:vertical;line-height:1.6}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));background:var(--bg);position:sticky;top:0;z-index:5}
+header h1{font-size:1.25rem;margin:0;font-family:var(--kfont);font-weight:600}
+header .ver{font-size:.75rem;color:var(--sub)}
+main{flex:1;width:100%;max-width:640px;margin:0 auto;padding:8px 16px 32px}
+.screen{display:none}.screen.active{display:block}
+.card{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:20px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.label{font-size:1rem;color:var(--sub);margin:10px 0 6px}
+.row{display:flex;gap:12px}.row>*{flex:1}
+.stack{display:flex;flex-direction:column;gap:12px}
+.big{font-family:var(--kfont);font-size:clamp(3.2rem,16vw,6rem);text-align:center;line-height:1.3;letter-spacing:.05em;word-break:keep-all;overflow-wrap:anywhere;font-weight:600;margin:8px 0}
+.mid{font-family:var(--kfont);font-size:clamp(1.6rem,7vw,2.6rem);text-align:center;line-height:1.5;margin:6px 0}
+.hint{font-family:var(--kfont);font-size:clamp(1.2rem,5vw,1.7rem);text-align:center;color:var(--sub);margin-top:14px;line-height:1.6}
+.qcard{min-height:44vh;display:flex;flex-direction:column;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none}
+.tag{display:inline-block;font-size:.95rem;background:#fff0dd;color:var(--accent-d);border-radius:999px;padding:4px 12px;margin-bottom:8px}
+.progress{display:flex;align-items:center;justify-content:space-between;font-size:1.05rem;color:var(--sub);margin:4px 2px}
+.bar{height:10px;background:#efe6d3;border-radius:999px;overflow:hidden;margin:4px 0 8px}
+.bar>i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.tap{color:var(--sub);text-align:center;font-size:1rem;margin-top:12px}
+.toggle{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:2px solid var(--line);border-radius:16px;padding:12px 16px;font-size:1.1rem}
+.seg{display:flex;background:#efe6d3;border-radius:14px;padding:4px;gap:4px}
+.seg button{flex:1;background:transparent;color:var(--sub);box-shadow:none;min-height:48px;padding:8px;font-size:1.05rem}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.seg button:active{transform:none}
+.switch{position:relative;width:64px;height:36px;background:#cfc6b3;border-radius:999px;transition:.2s;flex:none}
+.switch::after{content:"";position:absolute;top:4px;left:4px;width:28px;height:28px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.switch.on{background:var(--ok)}.switch.on::after{left:32px}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{display:flex;align-items:center;gap:12px;background:var(--card);border:2px solid var(--line);border-radius:16px;padding:12px 14px}
+.item .k{font-family:var(--kfont);font-size:1.9rem;font-weight:600;min-width:2.5em}
+.item .y{font-size:1.05rem;color:var(--sub)}
+.item .m{font-size:.9rem;color:var(--ng);margin-left:auto;white-space:nowrap}
+.item .del{background:transparent;color:var(--sub);box-shadow:none;min-height:40px;padding:6px 10px;font-size:1.3rem;flex:none}
+.item .del:active{transform:none}
+.empty{text-align:center;color:var(--sub);padding:28px 8px;font-size:1.05rem}
+.result-num{font-size:3rem;font-weight:700;text-align:center;font-family:var(--kfont)}
+.result-num span{font-size:1.2rem;color:var(--sub);margin:0 6px}
+details{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:12px 16px;margin:12px 0}
+summary{cursor:pointer;font-size:1.05rem;font-weight:600}
+.note{font-size:.95rem;color:var(--sub);line-height:1.6}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#333;color:#fff;padding:12px 20px;border-radius:999px;font-size:1rem;opacity:0;transition:.25s;pointer-events:none;z-index:20;white-space:nowrap}
+.toast.show{opacity:1}
+nav.bottom{position:sticky;bottom:0;background:var(--bg);padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;max-width:640px;margin:0 auto;width:100%}
+nav.bottom button{flex:1;min-height:60px;font-size:1.15rem}
+nav.bottom button.gray.cur{background:#fff;box-shadow:0 4px 0 var(--line);border:2px solid var(--accent)}
+.stamp{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8rem;pointer-events:none;opacity:0;transition:.15s}
+.stamp.show{opacity:.85}
+.qwrap{position:relative}
+</style>
+</head>
+<body>
+<header>
+  <h1>✏️ かんじ ふくしゅう</h1>
+  <span class="ver">v1</span>
+</header>
+
+<main>
+<!-- ホーム -->
+<section id="scr-home" class="screen active">
+  <div class="card">
+    <div class="label">とうろくした かんじ</div>
+    <div class="result-num" id="home-count">0<span>こ</span></div>
+    <div class="note" id="home-miss" style="text-align:center"></div>
+  </div>
+
+  <div class="stack">
+    <div class="label">もんだいの しゅるい</div>
+    <div class="seg" id="mode-seg">
+      <button data-mode="yomi" class="on">よみ<br><small>かんじ → よみがな</small></button>
+      <button data-mode="kaki">かき<br><small>よみがな → かんじ</small></button>
+    </div>
+
+    <div class="toggle" id="tg-shuffle"><span>🔀 シャッフル（じゅんばんを まぜる）</span><div class="switch on"></div></div>
+    <div class="toggle" id="tg-miss"><span>❌ 「まだ」の かんじだけ</span><div class="switch"></div></div>
+
+    <button id="btn-start" style="min-height:72px;font-size:1.4rem;margin-top:8px">▶︎ はじめる</button>
+  </div>
+
+  <details>
+    <summary>おうちの人へ（つかいかた）</summary>
+    <div class="note">
+      <p>「とうろく」タブで、まちがえた漢字を入れます。<b>ことば</b>（例：暑い）と<b>よみがな</b>（例：あつい）は必ず、<b>れい文</b>はあってもなくてもOKです。</p>
+      <p>「よみ」は漢字を見て読みを答えるモード、「かき」は読みを見て漢字をノートに書くモードです。カードをタップすると答えが出るので、「できた」「まだ」で自分で判定します。</p>
+      <p>データはこの端末のブラウザ内に保存されます。別の端末に移すときは「とうろく」タブの一番下にある「データのうつしかえ」を使ってください。</p>
+    </div>
+  </details>
+</section>
+
+<!-- クイズ -->
+<section id="scr-quiz" class="screen">
+  <div class="progress"><span id="q-pos">1 / 10</span><span id="q-mode-tag"></span></div>
+  <div class="bar"><i id="q-bar"></i></div>
+
+  <div class="qwrap">
+    <div class="card qcard" id="qcard">
+      <div id="q-front">
+        <div class="tag" id="q-tag">よみは？</div>
+        <div class="big" id="q-main">暑い</div>
+        <div class="hint" id="q-hint"></div>
+        <div class="tap">タップして こたえを見る</div>
+      </div>
+      <div id="q-back" style="display:none">
+        <div class="tag">こたえ</div>
+        <div class="big" id="a-main">あつい</div>
+        <div class="mid" id="a-sub"></div>
+        <div class="hint" id="a-hint"></div>
+      </div>
+    </div>
+    <div class="stamp" id="stamp"></div>
+  </div>
+
+  <div class="row" id="judge" style="visibility:hidden">
+    <button class="ng" style="min-height:72px;font-size:1.3rem">✕ まだ</button>
+    <button class="ok" style="min-height:72px;font-size:1.3rem">◯ できた</button>
+  </div>
+  <div style="margin-top:14px;text-align:center"><button class="gray small" id="btn-quit">やめる</button></div>
+</section>
+
+<!-- けっか -->
+<section id="scr-result" class="screen">
+  <div class="card" style="text-align:center">
+    <div class="tag">けっか</div>
+    <div class="mid" id="r-title">おつかれさま！</div>
+    <div class="row" style="margin-top:12px">
+      <div><div class="result-num" style="color:var(--ok)" id="r-ok">0</div><div class="label" style="text-align:center">◯ できた</div></div>
+      <div><div class="result-num" style="color:var(--ng)" id="r-ng">0</div><div class="label" style="text-align:center">✕ まだ</div></div>
+    </div>
+  </div>
+  <div class="list" id="r-list"></div>
+  <div class="stack" style="margin-top:16px">
+    <button class="ng" id="btn-retry-miss">✕ まだの かんじだけ もういちど</button>
+    <button id="btn-retry-all">🔁 さいしょから もういちど</button>
+    <button class="gray" id="btn-home">ホームに もどる</button>
+  </div>
+</section>
+
+<!-- とうろく -->
+<section id="scr-list" class="screen">
+  <div class="card">
+    <div class="label">ことば（かんじ）　※ひつよう</div>
+    <input id="in-kanji" placeholder="れい：暑い" autocomplete="off">
+    <div class="label">よみがな　※ひつよう</div>
+    <input id="in-yomi" placeholder="れい：あつい" autocomplete="off">
+    <div class="label">れい文（なくてもOK）</div>
+    <input id="in-hint" placeholder="れい：きょうは暑い日だ" autocomplete="off">
+    <button id="btn-add" style="margin-top:14px;width:100%">＋ とうろくする</button>
+  </div>
+
+  <div class="progress"><span id="list-count">0 こ</span><span><button class="gray small" id="btn-sort">ならびかえ：あたらしい順</button></span></div>
+  <div class="list" id="card-list"></div>
+
+  <details style="margin-top:20px">
+    <summary>まとめて とうろく（おうちの人用）</summary>
+    <div class="note">1行に1つ、「ことば　よみがな　れい文」の順にスペース区切りで書いて「まとめて追加」を押します。れい文は省略OK。</div>
+    <textarea id="bulk" placeholder="暑い あつい きょうは暑い日だ&#10;係 かかり 給食の係&#10;曲がる まがる"></textarea>
+    <button class="blue small" id="btn-bulk" style="margin-top:8px">まとめて追加</button>
+  </details>
+
+  <details>
+    <summary>データのうつしかえ（べつの端末へ）</summary>
+    <div class="note">「書き出す」を押すと下に文字列が出ます。それを全部コピーして、別の端末のこの欄に貼り付けて「読み込む」を押すと同じデータになります（読み込みは今のデータに追加されます。同じことばは重複しません）。</div>
+    <div class="row" style="margin:8px 0">
+      <button class="blue small" id="btn-export">書き出す</button>
+      <button class="blue small" id="btn-import">読み込む</button>
+    </div>
+    <textarea id="io" placeholder="ここに貼り付け"></textarea>
+    <div style="margin-top:14px"><button class="gray small" id="btn-reset-stats">「まだ」の回数をぜんぶリセット</button></div>
+    <div style="margin-top:8px"><button class="gray small" id="btn-clear" style="color:var(--ng)">ぜんぶ消す</button></div>
+  </details>
+</section>
+</main>
+
+<nav class="bottom">
+  <button class="gray cur" data-go="home">🏠 ホーム</button>
+  <button class="gray" data-go="list">📝 とうろく</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+const KEY='kanji-review-v1';
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+let db=load();
+let settings=db.settings;
+let quiz=null; // {ids:[], idx, flipped, ok:[], ng:[]}
+let sortNew=true;
+
+function load(){
+  try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&Array.isArray(d.cards))return Object.assign({settings:{mode:'yomi',shuffle:true,onlyMiss:false}},d);}catch(e){}
+  return {cards:[],settings:{mode:'yomi',shuffle:true,onlyMiss:false}};
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){toast('ほぞんできませんでした');}}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove('show'),1600);}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function norm(s){return (s||'').replace(/[\s　]+/g,' ').trim();}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function missCards(){return db.cards.filter(c=>(c.miss||0)>(c.ok||0)||c.last==='ng');}
+
+// ---- 画面切替 ----
+function show(name){
+  $$('.screen').forEach(s=>s.classList.toggle('active',s.id==='scr-'+name));
+  $$('nav.bottom button').forEach(b=>b.classList.toggle('cur',b.dataset.go===name));
+  $('nav.bottom').style.display=(name==='quiz')?'none':'flex';
+  window.scrollTo(0,0);
+  if(name==='home')renderHome();
+  if(name==='list')renderList();
+}
+$$('nav.bottom button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.go)));
+
+// ---- ホーム ----
+function renderHome(){
+  $('#home-count').innerHTML=db.cards.length+'<span>こ</span>';
+  const m=missCards().length;
+  $('#home-miss').textContent=db.cards.length?(m?`「まだ」の かんじ：${m}こ`:'「まだ」の かんじは ありません'):'「とうろく」タブから かんじを 入れてね';
+  $$('#mode-seg button').forEach(b=>b.classList.toggle('on',b.dataset.mode===settings.mode));
+  $('#tg-shuffle .switch').classList.toggle('on',!!settings.shuffle);
+  $('#tg-miss .switch').classList.toggle('on',!!settings.onlyMiss);
+  $('#btn-start').disabled=db.cards.length===0;
+}
+$$('#mode-seg button').forEach(b=>b.addEventListener('click',()=>{settings.mode=b.dataset.mode;save();renderHome();}));
+$('#tg-shuffle').addEventListener('click',()=>{settings.shuffle=!settings.shuffle;save();renderHome();});
+$('#tg-miss').addEventListener('click',()=>{settings.onlyMiss=!settings.onlyMiss;save();renderHome();});
+$('#btn-start').addEventListener('click',()=>{
+  let pool=settings.onlyMiss?missCards():db.cards.slice();
+  if(settings.onlyMiss&&pool.length===0){toast('「まだ」の かんじが ないので ぜんぶ出します');pool=db.cards.slice();}
+  startQuiz(pool.map(c=>c.id));
+});
+
+// ---- クイズ ----
+function startQuiz(ids){
+  ids=ids.slice();
+  if(settings.shuffle)shuffle(ids);
+  quiz={ids,idx:0,flipped:false,ok:[],ng:[]};
+  show('quiz');renderQ();
+}
+function cur(){return db.cards.find(c=>c.id===quiz.ids[quiz.idx]);}
+function maskHint(c){
+  if(!c.hint)return '';
+  if(c.hint.includes(c.kanji))return c.hint.split(c.kanji).join('（　'+c.yomi+'　）');
+  return c.hint;
+}
+function renderQ(){
+  const c=cur();if(!c){finish();return;}
+  const n=quiz.ids.length;
+  $('#q-pos').textContent=(quiz.idx+1)+' / '+n;
+  $('#q-bar').style.width=((quiz.idx)/n*100)+'%';
+  $('#q-mode-tag').textContent=settings.mode==='yomi'?'よみ':'かき';
+  const yomiMode=settings.mode==='yomi';
+  $('#q-tag').textContent=yomiMode?'よみは？':'かんじで 書くと？';
+  $('#q-main').textContent=yomiMode?c.kanji:c.yomi;
+  $('#q-hint').textContent=yomiMode?'':maskHint(c);
+  $('#a-main').textContent=yomiMode?c.yomi:c.kanji;
+  $('#a-sub').textContent=yomiMode?c.kanji:c.yomi;
+  $('#a-hint').textContent=c.hint||'';
+  quiz.flipped=false;
+  $('#q-front').style.display='';$('#q-back').style.display='none';
+  $('#judge').style.visibility='hidden';
+}
+$('#qcard').addEventListener('click',()=>{
+  if(!quiz||quiz.flipped)return;
+  quiz.flipped=true;
+  $('#q-front').style.display='none';$('#q-back').style.display='';
+  $('#judge').style.visibility='visible';
+});
+function judge(isOk){
+  if(!quiz||!quiz.flipped)return;
+  const c=cur();
+  if(isOk){c.ok=(c.ok||0)+1;c.last='ok';quiz.ok.push(c.id);}else{c.miss=(c.miss||0)+1;c.last='ng';quiz.ng.push(c.id);}
+  save();
+  const st=$('#stamp');st.textContent=isOk?'⭕️':'❌';st.classList.add('show');
+  setTimeout(()=>{st.classList.remove('show');quiz.idx++;if(quiz.idx>=quiz.ids.length)finish();else renderQ();},350);
+}
+$('#judge .ok').addEventListener('click',()=>judge(true));
+$('#judge .ng').addEventListener('click',()=>judge(false));
+$('#btn-quit').addEventListener('click',()=>{if(quiz.ok.length+quiz.ng.length>0)finish();else{quiz=null;show('home');}});
+document.addEventListener('keydown',e=>{
+  if(!quiz||!$('#scr-quiz').classList.contains('active'))return;
+  if(e.key===' '||e.key==='Enter'){e.preventDefault();$('#qcard').click();}
+  if(quiz.flipped&&(e.key==='ArrowRight'||e.key==='o'))judge(true);
+  if(quiz.flipped&&(e.key==='ArrowLeft'||e.key==='x'))judge(false);
+});
+
+// ---- けっか ----
+function finish(){
+  const ok=quiz.ok.length,ng=quiz.ng.length;
+  $('#r-ok').textContent=ok;$('#r-ng').textContent=ng;
+  $('#r-title').textContent=ng===0&&ok>0?'🎉 ぜんぶ できた！':ok>=ng?'👍 いいちょうし！':'💪 もういちど がんばろう';
+  const list=$('#r-list');list.innerHTML='';
+  quiz.ng.forEach(id=>{const c=db.cards.find(x=>x.id===id);if(!c)return;
+    list.insertAdjacentHTML('beforeend',`<div class="item"><span class="k">${esc(c.kanji)}</span><span class="y">${esc(c.yomi)}</span><span class="m">✕ まだ</span></div>`);});
+  $('#btn-retry-miss').style.display=ng?'':'none';
+  show('result');
+}
+$('#btn-retry-miss').addEventListener('click',()=>startQuiz(quiz.ng));
+$('#btn-retry-all').addEventListener('click',()=>startQuiz(quiz.ids));
+$('#btn-home').addEventListener('click',()=>{quiz=null;show('home');});
+
+// ---- とうろく ----
+function addCard(kanji,yomi,hint){
+  kanji=norm(kanji);yomi=norm(yomi);hint=norm(hint);
+  if(!kanji||!yomi)return false;
+  if(db.cards.some(c=>c.kanji===kanji&&c.yomi===yomi))return 'dup';
+  db.cards.push({id:uid(),kanji,yomi,hint,miss:0,ok:0,last:'',created:Date.now()});
+  return true;
+}
+$('#btn-add').addEventListener('click',()=>{
+  const r=addCard($('#in-kanji').value,$('#in-yomi').value,$('#in-hint').value);
+  if(r==='dup'){toast('もう とうろくされています');return;}
+  if(!r){toast('ことばと よみがなを 入れてね');return;}
+  save();$('#in-kanji').value='';$('#in-yomi').value='';$('#in-hint').value='';$('#in-kanji').focus();
+  toast('とうろくしました');renderList();
+});
+// Enter で次の欄へ（日本語入力の確定Enterは無視）
+[['#in-kanji','#in-yomi'],['#in-yomi','#in-hint'],['#in-hint',null]].forEach(([a,b])=>{
+  $(a).addEventListener('keydown',e=>{if(e.key!=='Enter'||e.isComposing||e.keyCode===229)return;e.preventDefault();if(b)$(b).focus();else $('#btn-add').click();});
+});
+$('#btn-bulk').addEventListener('click',()=>{
+  const lines=$('#bulk').value.split(/\n/).map(norm).filter(Boolean);
+  let n=0,d=0;
+  lines.forEach(l=>{const p=l.split(/[\s,、，\t]+/);const r=addCard(p[0],p[1],p.slice(2).join(' '));if(r===true)n++;else if(r==='dup')d++;});
+  save();$('#bulk').value='';toast(`${n}こ とうろく${d?`（${d}こは重複）`:''}`);renderList();
+});
+function renderList(){
+  const list=$('#card-list');
+  $('#list-count').textContent=db.cards.length+' こ';
+  $('#btn-sort').textContent='ならびかえ：'+(sortNew?'あたらしい順':'まだが多い順');
+  if(!db.cards.length){list.innerHTML='<div class="empty">まだ とうろくが ありません。<br>上の欄から 入れてね。</div>';return;}
+  const cards=db.cards.slice().sort((a,b)=>sortNew?b.created-a.created:((b.miss||0)-(b.ok||0))-((a.miss||0)-(a.ok||0)));
+  list.innerHTML=cards.map(c=>`<div class="item" data-id="${c.id}"><span class="k">${esc(c.kanji)}</span><div><div class="y">${esc(c.yomi)}</div>${c.hint?`<div class="y" style="font-size:.9rem">${esc(c.hint)}</div>`:''}</div><span class="m">${c.miss?'✕'+c.miss:''}${c.ok?' <span style="color:var(--ok)">◯'+c.ok+'</span>':''}</span><button class="del" aria-label="けす">🗑</button></div>`).join('');
+}
+$('#btn-sort').addEventListener('click',()=>{sortNew=!sortNew;renderList();});
+$('#card-list').addEventListener('click',e=>{
+  const b=e.target.closest('.del');if(!b)return;
+  const id=b.closest('.item').dataset.id;const c=db.cards.find(x=>x.id===id);
+  if(confirm(`「${c.kanji}」を けしますか？`)){db.cards=db.cards.filter(x=>x.id!==id);save();renderList();toast('けしました');}
+});
+$('#btn-export').addEventListener('click',()=>{
+  $('#io').value=JSON.stringify(db.cards.map(c=>({k:c.kanji,y:c.yomi,h:c.hint||'',m:c.miss||0,o:c.ok||0})));
+  $('#io').focus();$('#io').select();
+  try{document.execCommand('copy');toast('コピーしました');}catch(e){toast('ぜんぶ選んでコピーしてください');}
+});
+$('#btn-import').addEventListener('click',()=>{
+  let arr;try{arr=JSON.parse($('#io').value);}catch(e){toast('読み込めませんでした');return;}
+  if(!Array.isArray(arr)){toast('読み込めませんでした');return;}
+  let n=0;arr.forEach(x=>{const r=addCard(x.k,x.y,x.h);if(r===true){const c=db.cards[db.cards.length-1];c.miss=x.m||0;c.ok=x.o||0;n++;}});
+  save();$('#io').value='';toast(`${n}こ 読み込みました`);renderList();
+});
+$('#btn-reset-stats').addEventListener('click',()=>{if(confirm('「まだ」「できた」の回数をぜんぶ0にしますか？')){db.cards.forEach(c=>{c.miss=0;c.ok=0;c.last='';});save();renderList();toast('リセットしました');}});
+$('#btn-clear').addEventListener('click',()=>{if(confirm('とうろくした漢字をぜんぶ消します。よろしいですか？')&&confirm('本当に消しますか？（元に戻せません）')){db.cards=[];save();renderList();toast('ぜんぶ消しました');}});
+
+renderHome();
+})();
+</script>
+</body>
+</html>
