@@ -81,7 +81,9 @@ nav.bottom button.gray.cur{background:#fff;box-shadow:0 4px 0 var(--line);border
 .stamp.show{opacity:.85}
 .qwrap{position:relative}
 .remain{font-weight:700;color:var(--accent-d);font-size:1.2rem}
-canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid var(--line);border-radius:12px;touch-action:none;cursor:crosshair}
+canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid var(--line);border-radius:12px;touch-action:none;cursor:crosshair;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#draw-wrap,#q-front{-webkit-touch-callout:none}
+.draw-tools{margin-top:16px}
 .draw-tools{display:flex;gap:10px;justify-content:center;margin-top:10px}
 .draw-tools button{flex:none;min-width:120px}
 .nb{display:inline-block;font-size:.95rem;background:#ffe3e6;color:var(--ng-d);border-radius:999px;padding:4px 12px;font-weight:600;white-space:nowrap}
@@ -97,7 +99,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
 <body>
 <header>
   <h1>✏️ かんじ ふくしゅう</h1>
-  <span class="ver">v3.3</span>
+  <span class="ver">v3.4</span>
 </header>
 
 <main>
@@ -350,13 +352,18 @@ function onMove(e){if(!drawing||e.pointerId!==activeId)return;e.preventDefault()
   const evs=(e.getCoalescedEvents&&e.getCoalescedEvents().length)?e.getCoalescedEvents():[e];
   for(const ev of evs)strokeTo(pp(ev));}
 function onUp(e){if(e.pointerId!==activeId)return;strokeEnd();}
+['touchstart','touchmove','touchend','touchcancel'].forEach(ev=>dcv.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();},{passive:false}));
+dcv.addEventListener('contextmenu',e=>e.preventDefault());
+dcv.addEventListener('selectstart',e=>e.preventDefault());
 window.addEventListener('pointermove',onMove,{passive:false});
 window.addEventListener('pointerup',onUp);
 window.addEventListener('pointercancel',onUp);
 dcv.addEventListener('click',e=>e.stopPropagation());
 function onTap(el,fn){
-  el.addEventListener('click',e=>{e.stopPropagation();fn();});
-  el.addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();fn();},{passive:false});
+  let last=0;const go=e=>{e.stopPropagation();if(e.cancelable)e.preventDefault();const now=Date.now();if(now-last<600)return;last=now;fn();};
+  el.addEventListener('pointerup',go);
+  el.addEventListener('touchend',go,{passive:false});
+  el.addEventListener('click',go);
 }
 onTap($('#btn-clear-draw'),()=>{const c=cur();if(c)resetDraw(targetText(c));});
 onTap($('#btn-reveal'),()=>flip());
