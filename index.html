@@ -97,7 +97,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
 <body>
 <header>
   <h1>✏️ かんじ ふくしゅう</h1>
-  <span class="ver">v3</span>
+  <span class="ver">v3.1</span>
 </header>
 
 <main>
@@ -253,7 +253,7 @@ let quiz=null; // {ids:[], idx, flipped, ok:[], ng:[]}
 let sortNew=true;
 
 function load(){
-  try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&Array.isArray(d.cards))d.settings=Object.assign({mode:'yomi',shuffle:true,onlyMiss:false,sound:true,hand:true},d.settings||{});return d;}catch(e){}
+  try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&Array.isArray(d.cards)){d.settings=Object.assign({mode:'yomi',shuffle:true,onlyMiss:false,sound:true,hand:true},d.settings||{});return d;}}catch(e){}
   return {cards:[],settings:{mode:'yomi',shuffle:true,onlyMiss:false,sound:true,hand:true}};
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){toast('ほぞんできませんでした');}}
