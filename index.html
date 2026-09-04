@@ -106,7 +106,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
 <body>
 <header>
   <h1>✏️ かんじ ふくしゅう</h1>
-  <span class="ver">v4.1</span>
+  <span class="ver">v4.2</span>
 </header>
 
 <main>
@@ -145,8 +145,8 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
   <details>
     <summary>おうちの人へ（つかいかた）</summary>
     <div class="note">
-      <p>「とうろく」タブで、まちがえた漢字を入れます。<b>ことば</b>（例：暑い）と<b>よみがな</b>（例：あつい）は必ず、<b>れい文</b>はあってもなくてもOKです。</p>
-      <p>「よみ」は漢字を見て読みを答えるモード、「かき」は読みを見て漢字をノートに書くモードです。カードをタップすると答えが出るので、「できた」「まだ」で自分で判定します。</p>
+      <p>「とうろく」タブで、まちがえた漢字を入れます。<b>ことば</b>（例：暑い）と<b>よみがな</b>（例：あつい）は必ず、<b>いみ</b>はあってもなくてもOKです。「🔍 じしょで しらべる」を押すと、入力した言葉をgoo辞書で開けるので、意味を確認して入れられます。</p>
+      <p>「よみ」は漢字を見て読みを答えるモード（答えを見ると意味も出ます）、「かき」は読みと意味を見て漢字を書くモードです。カードをタップすると答えが出るので、「できた」「まだ」で自分で判定します。</p>
       <p>✍️「手がきのマス」をオンにすると、問題カードにマス目が出ます。ペンや指で字を書いてから「こたえを見る」を押すと、自分の字の下に正解の字がうすい赤で重なって出るので、見比べられます（字の正しさの自動判定はしません）。</p>
       <p>✍️「まちがえたら 5回 れんしゅう」がオンだと、「まだ」を押した直後に、その漢字を漢字ノートのように縦5マスで書く練習画面に進みます。一番上のうすい字をなぞり、下の4マスは自分で書きます。結果画面やホームの🔥カードからもまとめて練習できます。</p>
       <p>✏️ 登録した内容を直したいときは、「とうろく」タブの一覧で✏️を押すと入力欄に内容が入るので、書き直して「✔ なおす」を押します。</p>
@@ -236,8 +236,9 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
     <input id="in-kanji" placeholder="れい：暑い" autocomplete="off">
     <div class="label">よみがな　※ひつよう</div>
     <input id="in-yomi" placeholder="れい：あつい" autocomplete="off">
-    <div class="label">れい文（なくてもOK）</div>
-    <input id="in-hint" placeholder="れい：きょうは暑い日だ" autocomplete="off">
+    <div class="label">いみ（なくてもOK）</div>
+    <input id="in-hint" placeholder="れい：気温が高くて あせが出るくらい あたたかい" autocomplete="off">
+    <div style="margin-top:8px;display:flex;justify-content:flex-end"><button class="gray small" id="btn-dict">🔍 じしょで しらべる</button></div>
     <button id="btn-add" style="margin-top:14px;width:100%">＋ とうろくする</button>
     <button class="gray small" id="btn-cancel-edit" style="margin-top:10px;width:100%;display:none">なおすのを やめる</button>
   </div>
@@ -247,8 +248,8 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
 
   <details style="margin-top:20px">
     <summary>まとめて とうろく（おうちの人用）</summary>
-    <div class="note">1行に1つ、「ことば　よみがな　れい文」の順にスペース区切りで書いて「まとめて追加」を押します。れい文は省略OK。</div>
-    <textarea id="bulk" placeholder="暑い あつい きょうは暑い日だ&#10;係 かかり 給食の係&#10;曲がる まがる"></textarea>
+    <div class="note">1行に1つ、「ことば　よみがな　いみ」の順にスペース区切りで書いて「まとめて追加」を押します。いみは省略OK。</div>
+    <textarea id="bulk" placeholder="暑い あつい 気温が高くて あたたかい&#10;係 かかり ある仕事を うけもつ人&#10;曲がる まがる"></textarea>
     <button class="blue small" id="btn-bulk" style="margin-top:8px">まとめて追加</button>
   </details>
 
@@ -341,7 +342,7 @@ $('#btn-nigate-prac').addEventListener('click',()=>startPractice(nigateCards().m
 $('#btn-start').addEventListener('click',()=>{
   let pool=settings.onlyMiss?missCards():db.cards.slice();
   if(settings.onlyMiss&&pool.length===0){toast('「まだ」の かんじが ないので ぜんぶ出します');pool=db.cards.slice();}
-  if(settings.test&&pool.length===0){testCards=[{id:'t1',kanji:'暑い',yomi:'あつい',hint:'きょうは暑い日だ',miss:0,ok:0},{id:'t2',kanji:'係',yomi:'かかり',hint:'給食の係',miss:0,ok:0},{id:'t3',kanji:'曲がる',yomi:'まがる',hint:'角を曲がる',miss:0,ok:0}];pool=testCards.slice();}else testCards=null;
+  if(settings.test&&pool.length===0){testCards=[{id:'t1',kanji:'暑い',yomi:'あつい',hint:'気温が高くて あたたかい',miss:0,ok:0},{id:'t2',kanji:'係',yomi:'かかり',hint:'ある仕事を うけもつ人',miss:0,ok:0},{id:'t3',kanji:'曲がる',yomi:'まがる',hint:'まっすぐでなくなる。むきをかえる',miss:0,ok:0}];pool=testCards.slice();}else testCards=null;
   startQuiz(pool.map(c=>c.id));
 });
 
@@ -494,11 +495,7 @@ function startQuiz(ids){
 }
 function findCard(id){return (testCards||[]).find(c=>c.id===id)||db.cards.find(c=>c.id===id);}
 function cur(){return findCard(quiz.ids[quiz.idx]);}
-function maskHint(c){
-  if(!c.hint)return '';
-  if(c.hint.includes(c.kanji))return c.hint.split(c.kanji).join('（　'+c.yomi+'　）');
-  return c.hint;
-}
+function meaningText(c){return c.hint?'いみ：'+c.hint:'';}
 function renderQ(){
   const c=cur();if(!c){finish();return;}
   const n=quiz.ids.length;
@@ -509,7 +506,7 @@ function renderQ(){
   const yomiMode=settings.mode==='yomi';
   $('#q-tag').textContent=yomiMode?'よみは？':'かんじで 書くと？';
   $('#q-main').textContent=yomiMode?c.kanji:c.yomi;
-  $('#q-hint').textContent=yomiMode?'':maskHint(c);
+  $('#q-hint').textContent=yomiMode?'':meaningText(c);
   $('#q-nb').innerHTML=nbHtml(c);
   $('#draw-wrap').style.display=settings.hand?'':'none';
   $('#q-tap').textContent=settings.hand?'マスに 書いてから「こたえを 見る」':'タップして こたえを見る';
@@ -517,7 +514,7 @@ function renderQ(){
   $('#cmp-wrap').style.display='none';
   $('#a-main').textContent=yomiMode?c.yomi:c.kanji;
   $('#a-sub').textContent=yomiMode?c.kanji:c.yomi;
-  $('#a-hint').textContent=c.hint||'';
+  $('#a-hint').textContent=meaningText(c);
   quiz.flipped=false;tapGuard=0;
   $('#q-front').style.display='';$('#q-back').style.display='none';
   $('#judge').style.visibility='hidden';
@@ -587,6 +584,11 @@ function setEditMode(id){
   renderList();
 }
 $('#btn-cancel-edit').addEventListener('click',()=>setEditMode(null));
+$('#btn-dict').addEventListener('click',()=>{
+  const w=norm($('#in-kanji').value);
+  if(!w){toast('先に「ことば」を 入れてね');$('#in-kanji').focus();return;}
+  window.open('https://dictionary.goo.ne.jp/srch/all/'+encodeURIComponent(w)+'/m0u/','_blank','noopener');
+});
 $('#btn-add').addEventListener('click',()=>{
   if(editingId){
     const c=db.cards.find(x=>x.id===editingId);if(!c){setEditMode(null);return;}
@@ -617,7 +619,7 @@ function renderList(){
   $('#btn-sort').textContent='ならびかえ：'+(sortNew?'あたらしい順':'にがて順');
   if(!db.cards.length){list.innerHTML='<div class="empty">まだ とうろくが ありません。<br>上の欄から 入れてね。</div>';return;}
   const cards=db.cards.slice().sort((a,b)=>sortNew?b.created-a.created:((b.miss||0)-(b.ok||0))-((a.miss||0)-(a.ok||0)));
-  list.innerHTML=cards.map(c=>`<div class="item${isNigate(c)?' nigate':''}${c.id===editingId?' editing':''}" data-id="${c.id}"><span class="k">${esc(c.kanji)}</span><div><div class="y">${esc(c.yomi)}</div>${c.hint?`<div class="y" style="font-size:.9rem">${esc(c.hint)}</div>`:''}${isNigate(c)?`<div style="margin-top:4px">${nbHtml(c)}</div>`:''}</div><span class="m">${c.miss?'✕'+c.miss:''}${c.ok?' <span style="color:var(--ok)">◯'+c.ok+'</span>':''}</span><button class="edit" aria-label="なおす">✏️</button><button class="del" aria-label="けす">🗑</button></div>`).join('');
+  list.innerHTML=cards.map(c=>`<div class="item${isNigate(c)?' nigate':''}${c.id===editingId?' editing':''}" data-id="${c.id}"><span class="k">${esc(c.kanji)}</span><div><div class="y">${esc(c.yomi)}</div>${c.hint?`<div class="y" style="font-size:.9rem">いみ：${esc(c.hint)}</div>`:''}${isNigate(c)?`<div style="margin-top:4px">${nbHtml(c)}</div>`:''}</div><span class="m">${c.miss?'✕'+c.miss:''}${c.ok?' <span style="color:var(--ok)">◯'+c.ok+'</span>':''}</span><button class="edit" aria-label="なおす">✏️</button><button class="del" aria-label="けす">🗑</button></div>`).join('');
 }
 $('#btn-sort').addEventListener('click',()=>{sortNew=!sortNew;renderList();});
 $('#card-list').addEventListener('click',e=>{
