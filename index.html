@@ -86,13 +86,19 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
 .draw-tools{margin-top:16px}
 .draw-tools{display:flex;gap:10px;justify-content:center;margin-top:10px}
 .draw-tools button{flex:none;min-width:120px}
-#p-rows{display:flex;flex-direction:row-reverse;justify-content:safe center;align-items:flex-start;gap:12px;margin:8px 0;padding:0 4px 6px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+#p-rows{display:flex;flex-direction:row-reverse;justify-content:center;align-items:flex-start;gap:10px;margin:8px 0;flex-wrap:nowrap;touch-action:none;-webkit-user-select:none;user-select:none}
+.pcol{touch-action:none}
 .pcol{display:flex;flex-direction:column;align-items:center;gap:4px}
 .pcol .pch{font-family:var(--kfont);font-size:1.5rem;font-weight:600;color:var(--sub);line-height:1.2}
 .pcol canvas.draw{margin:0}
 .item .edit{background:transparent;color:var(--sub);box-shadow:none;min-height:40px;padding:6px 8px;font-size:1.2rem;flex:none}
 .item .edit:active{transform:none}
 .editing{border-color:var(--blue)!important;background:#eef4fd}
+a.abtn{display:inline-block;text-decoration:none;font-family:inherit;font-size:1rem;font-weight:600;border-radius:12px;padding:8px 14px;min-height:44px;line-height:28px;background:var(--gray);color:var(--ink);box-shadow:0 4px 0 #b8b0a0;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+a.abtn:active{transform:translateY(3px);box-shadow:0 1px 0 #b8b0a0}
+a.abtn.blue{background:var(--blue);color:#fff;box-shadow:0 4px 0 var(--blue-d)}
+a.abtn.mini{min-height:36px;line-height:22px;padding:6px 10px;font-size:.95rem;flex:none}
+.dict-row{text-align:center;margin-top:12px}
 .nb{display:inline-block;font-size:.95rem;background:#ffe3e6;color:var(--ng-d);border-radius:999px;padding:4px 12px;font-weight:600;white-space:nowrap}
 .item.nigate{border-color:#f3a3ab;background:#fff5f6}
 .item.nigate .k{color:var(--ng-d)}
@@ -106,7 +112,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
 <body>
 <header>
   <h1>✏️ かんじ ふくしゅう</h1>
-  <span class="ver">v4.4</span>
+  <span class="ver">v4.6</span>
 </header>
 
 <main>
@@ -145,7 +151,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
   <details>
     <summary>おうちの人へ（つかいかた）</summary>
     <div class="note">
-      <p>「とうろく」タブで、まちがえた漢字を入れます。<b>ことば</b>（例：暑い）と<b>よみがな</b>（例：あつい）は必ず、<b>いみ</b>はあってもなくてもOKです。「🔍 じしょで しらべる」を押すと、入力した言葉をgoo辞書で開けるので、意味を確認して入れられます。</p>
+      <p>「とうろく」タブで、まちがえた漢字を入れます。<b>ことば</b>（例：暑い）と<b>よみがな</b>（例：あつい）は必ず、<b>いみ</b>はあってもなくてもOKです。「🔍 じしょで しらべる」を押すと、入力した言葉をgoo辞書で開けるので、意味を確認して入れられます。答えの画面・練習画面・結果画面にも同じボタンがあり、まちがえた漢字をその場で調べられます。</p>
       <p>「よみ」は漢字を見て読みを答えるモード（答えを見ると意味も出ます）、「かき」は読みと意味を見て漢字を書くモードです。カードをタップすると答えが出るので、「できた」「まだ」で自分で判定します。</p>
       <p>✍️「手がきのマス」をオンにすると、問題カードにマス目が出ます。ペンや指で字を書いてから「こたえを見る」を押すと、自分の字の下に正解の字がうすい赤で重なって出るので、見比べられます（字の正しさの自動判定はしません）。</p>
       <p>✍️「まちがえたら 5回 れんしゅう」がオンだと、「まだ」を押した直後に、その言葉を漢字ノートのように縦書きで5回書く練習画面に進みます。右はしの列のうすい字をなぞり、残り4列は自分で書きます。結果画面やホームの🔥カードからもまとめて練習できます。</p>
@@ -181,6 +187,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
         <div class="big" id="a-main">あつい</div>
         <div class="mid" id="a-sub"></div>
         <div class="hint" id="a-hint"></div>
+        <div class="dict-row"><a class="abtn" id="a-dict" href="https://dictionary.goo.ne.jp/" target="_blank" rel="noopener">🔍 いみを じしょで しらべる</a></div>
         <div id="cmp-wrap" style="display:none">
           <div class="label" style="text-align:center">きみの字と くらべてみよう（うすい赤が こたえ）</div>
           <canvas class="draw" id="cmp"></canvas>
@@ -223,6 +230,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
     <div class="tag">まちがえた かんじ</div>
     <div class="mid" id="p-word" style="font-size:clamp(2.2rem,10vw,3.6rem);font-weight:600">暑い</div>
     <div class="hint" id="p-yomi" style="margin-top:0">あつい</div>
+    <div class="dict-row" style="margin-top:6px"><a class="abtn mini" id="p-dict" href="https://dictionary.goo.ne.jp/" target="_blank" rel="noopener">🔍 いみを しらべる</a></div>
     <div class="label" style="text-align:center">右はしの うすい字を なぞって、あと 4回 書こう</div>
     <div id="p-rows"></div>
     <div class="draw-tools"><button class="gray small" id="btn-p-clear">🧽 ぜんぶ けす</button><button class="blue" id="btn-p-next">つぎへ ▶︎</button></div>
@@ -238,7 +246,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
     <input id="in-yomi" placeholder="れい：あつい" autocomplete="off">
     <div class="label">いみ（なくてもOK）</div>
     <input id="in-hint" placeholder="れい：気温が高くて あせが出るくらい あたたかい" autocomplete="off">
-    <div style="margin-top:8px;display:flex;justify-content:flex-end"><button class="gray small" id="btn-dict">🔍 じしょで しらべる</button></div>
+    <div style="margin-top:8px;display:flex;justify-content:flex-end"><a class="abtn" id="btn-dict" href="https://dictionary.goo.ne.jp/" target="_blank" rel="noopener">🔍 じしょで しらべる</a></div>
     <button id="btn-add" style="margin-top:14px;width:100%">＋ とうろくする</button>
     <button class="gray small" id="btn-cancel-edit" style="margin-top:10px;width:100%;display:none">なおすのを やめる</button>
   </div>
@@ -399,7 +407,7 @@ function drawGrid(cv,n,side,models,vertical){
   return ctx;
 }
 function makeDrawer(cv){
-  const d={cv,ctx:cv.getContext('2d'),side:0,n:1,vertical:false,hasInk:false,drawing:false,lastPt:null,activeId:null,lastT:0};
+  const d={cv,ctx:cv.getContext('2d'),side:0,n:1,vertical:false,hasInk:false,drawing:false,lastPt:null,activeId:null,activeType:'',lastT:0};
   d.setup=(n,side,models,vertical)=>{d.ctx=drawGrid(cv,n,side,models,vertical);d.n=n;d.side=side;d.vertical=!!vertical;d.hasInk=false;};
   const pp=e=>{const r=cv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top,p:(e.pointerType==='pen'&&e.pressure>0)?Math.max(.45,Math.min(1,e.pressure)):0.6};};
   const lw=p=>d.side/20*(0.55+0.7*p);
@@ -410,8 +418,9 @@ function makeDrawer(cv){
   d.move=e=>{if(!d.drawing||e.pointerId!==d.activeId)return;e.preventDefault();d.lastT=Date.now();
     const evs=(e.getCoalescedEvents&&e.getCoalescedEvents().length)?e.getCoalescedEvents():[e];for(const ev of evs)d.to(pp(ev));};
   cv.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();
-    if(activeDrawer&&activeDrawer.drawing){ if(e.pointerType==='touch'&&Date.now()-activeDrawer.lastT<1500)return; activeDrawer.end(); }
-    activeDrawer=d;d.activeId=e.pointerId;d.lastT=Date.now();d.start(pp(e));},{passive:false});
+    if(activeDrawer&&activeDrawer.drawing){ /* ペンで書いている最中（0.4秒以内）の指・手のひらだけ無視。それ以外は新しい線として受け付ける */
+      if(e.pointerType==='touch'&&activeDrawer.activeType==='pen'&&Date.now()-activeDrawer.lastT<400)return; activeDrawer.end(); }
+    activeDrawer=d;d.activeId=e.pointerId;d.activeType=e.pointerType;d.lastT=Date.now();d.start(pp(e));},{passive:false});
   ['touchstart','touchmove','touchend','touchcancel'].forEach(ev=>cv.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();},{passive:false}));
   cv.addEventListener('contextmenu',e=>e.preventDefault());
   cv.addEventListener('selectstart',e=>e.preventDefault());
@@ -457,7 +466,7 @@ function renderPractice(){
   const c=findCard(prac.ids[prac.idx]);if(!c){practiceNext();return;}
   $('#p-pos').textContent=(prac.idx+1)+' / '+prac.ids.length;
   $('#p-tag').textContent=settings.test?'🧪ためし':'';
-  $('#p-word').textContent=c.kanji;$('#p-yomi').textContent=c.yomi;
+  $('#p-word').textContent=c.kanji;$('#p-yomi').textContent=c.yomi;$('#p-dict').href=dictUrl(c.kanji);
   renderPracticeRows();
   tapGuard=0;window.scrollTo(0,0);
 }
@@ -467,9 +476,9 @@ function renderPracticeRows(){
   const wrap=$('#p-rows');wrap.innerHTML='';prac.drawers=[];
   // 単語を縦1列（文字数ぶんのマスがつながる）に書く。その列を5回分、右から左へ並べる（漢字ノートと同じ）
   const REPEAT=5;
-  const byW=Math.floor((Math.max(240,wrap.clientWidth)-12*(REPEAT-1))/REPEAT);
+  const byW=Math.floor((Math.max(240,wrap.clientWidth)-10*(REPEAT-1))/REPEAT);
   const byH=Math.floor((window.innerHeight-330)/n);
-  const side=Math.max(64,Math.min(110,byW,byH)); // 小さい画面では横スクロール
+  const side=Math.max(44,Math.min(110,byW,byH)); // 画面幅に収める（スクロールさせない：ペンの反応を落とさないため）
   for(let k=0;k<REPEAT;k++){
     const col=document.createElement('div');col.className='pcol';
     const lab=document.createElement('span');lab.className='pch';lab.style.fontSize='.9rem';lab.textContent=k===0?'なぞる':(k+1)+'回め';
@@ -478,7 +487,6 @@ function renderPracticeRows(){
     const models=k===0?chars.map((ch,i)=>({i,ch,color:'rgba(120,120,120,.35)'})):null;
     const d=makeDrawer(cv);d.setup(n,side,models,true);prac.drawers.push(d);
   }
-  wrap.scrollLeft=wrap.scrollWidth; // 右はし（なぞる列）から見せる
 }
 function practiceNext(){
   if(!prac)return;
@@ -516,6 +524,7 @@ function renderQ(){
   $('#a-main').textContent=yomiMode?c.yomi:c.kanji;
   $('#a-sub').textContent=yomiMode?c.kanji:c.yomi;
   $('#a-hint').textContent=meaningText(c);
+  $('#a-dict').href=dictUrl(c.kanji);
   quiz.flipped=false;tapGuard=0;
   $('#q-front').style.display='';$('#q-back').style.display='none';
   $('#judge').style.visibility='hidden';
@@ -557,7 +566,7 @@ function finish(){
   $('#r-title').textContent=(settings.test?'🧪ためし（きろくなし）　':'')+(ng===0&&ok>0?'🎉 ぜんぶ できた！':ok>=ng?'👍 いいちょうし！':'💪 もういちど がんばろう');
   const list=$('#r-list');list.innerHTML='';
   quiz.ng.forEach(id=>{const c=findCard(id);if(!c)return;
-    list.insertAdjacentHTML('beforeend',`<div class="item${isNigate(c)?' nigate':''}"><span class="k">${esc(c.kanji)}</span><span class="y">${esc(c.yomi)}</span><span class="m">${isNigate(c)?'🔥 にがて ×'+c.miss:'✕ まだ'}</span></div>`);});
+    list.insertAdjacentHTML('beforeend',`<div class="item${isNigate(c)?' nigate':''}"><span class="k">${esc(c.kanji)}</span><div><div class="y">${esc(c.yomi)}</div>${c.hint?`<div class="y" style="font-size:.9rem">いみ：${esc(c.hint)}</div>`:''}</div><span class="m">${isNigate(c)?'🔥 にがて ×'+c.miss:'✕ まだ'}</span><a class="abtn mini" href="${dictUrl(c.kanji)}" target="_blank" rel="noopener" aria-label="じしょで しらべる">🔍</a></div>`);});
   $('#btn-retry-miss').style.display=ng?'':'none';$('#btn-prac-miss').style.display=ng?'':'none';
   show('result');
 }
@@ -582,14 +591,17 @@ function setEditMode(id){
   $('#in-kanji').parentElement.classList.toggle('editing',!!c);
   if(c){$('#in-kanji').value=c.kanji;$('#in-yomi').value=c.yomi;$('#in-hint').value=c.hint||'';window.scrollTo(0,0);$('#in-kanji').focus();}
   else{$('#in-kanji').value='';$('#in-yomi').value='';$('#in-hint').value='';}
+  syncFormDict();
   renderList();
 }
 $('#btn-cancel-edit').addEventListener('click',()=>setEditMode(null));
-$('#btn-dict').addEventListener('click',()=>{
-  const w=norm($('#in-kanji').value);
-  if(!w){toast('先に「ことば」を 入れてね');$('#in-kanji').focus();return;}
-  window.open('https://dictionary.goo.ne.jp/srch/all/'+encodeURIComponent(w)+'/m0u/','_blank','noopener');
-});
+// 辞書リンク（goo辞書）。別タブ命令ではなく普通のリンクにする（ホーム画面から起動した時も開ける）
+function dictUrl(w){return 'https://dictionary.goo.ne.jp/srch/all/'+encodeURIComponent(w)+'/m0u/';}
+function syncFormDict(){const w=norm($('#in-kanji').value);$('#btn-dict').href=w?dictUrl(w):'https://dictionary.goo.ne.jp/';}
+$('#in-kanji').addEventListener('input',syncFormDict);
+$('#btn-dict').addEventListener('click',e=>{e.stopPropagation();const w=norm($('#in-kanji').value);if(!w){e.preventDefault();toast('先に「ことば」を 入れてね');$('#in-kanji').focus();return;}syncFormDict();});
+$('#a-dict').addEventListener('click',e=>e.stopPropagation());
+$('#p-dict').addEventListener('click',e=>e.stopPropagation());
 $('#btn-add').addEventListener('click',()=>{
   if(editingId){
     const c=db.cards.find(x=>x.id===editingId);if(!c){setEditMode(null);return;}
