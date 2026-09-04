@@ -97,7 +97,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
 <body>
 <header>
   <h1>✏️ かんじ ふくしゅう</h1>
-  <span class="ver">v3.1</span>
+  <span class="ver">v3.2</span>
 </header>
 
 <main>
@@ -333,15 +333,19 @@ function setupCanvas(cv,text){
 }
 function resetDraw(text){const r=setupCanvas(dcv,text);dside=r.side;dcells=r.n;hasInk=false;}
 function pos(e){const r=dcv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top,p:(e.pointerType==='pen'&&e.pressure>0)?e.pressure:0.5};}
-dcv.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();drawing=true;lastPt=pos(e);dcv.setPointerCapture(e.pointerId);
+dcv.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();drawing=true;lastPt=pos(e);
   dctx.fillStyle='#222';dctx.beginPath();dctx.arc(lastPt.x,lastPt.y,dside/40,0,Math.PI*2);dctx.fill();hasInk=true;});
 dcv.addEventListener('pointermove',e=>{if(!drawing)return;e.preventDefault();const q=pos(e);
   dctx.strokeStyle='#222';dctx.lineCap='round';dctx.lineJoin='round';dctx.lineWidth=dside/22*(0.6+q.p);
   dctx.beginPath();dctx.moveTo(lastPt.x,lastPt.y);dctx.lineTo(q.x,q.y);dctx.stroke();lastPt=q;});
 ['pointerup','pointercancel','pointerleave'].forEach(ev=>dcv.addEventListener(ev,e=>{drawing=false;}));
 dcv.addEventListener('click',e=>e.stopPropagation());
-$('#btn-clear-draw').addEventListener('click',e=>{e.stopPropagation();const c=cur();if(c)resetDraw(targetText(c));});
-$('#btn-reveal').addEventListener('click',e=>{e.stopPropagation();flip();});
+function onTap(el,fn){
+  el.addEventListener('click',e=>{e.stopPropagation();fn();});
+  el.addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();fn();},{passive:false});
+}
+onTap($('#btn-clear-draw'),()=>{const c=cur();if(c)resetDraw(targetText(c));});
+onTap($('#btn-reveal'),()=>flip());
 function targetText(c){return settings.mode==='yomi'?c.yomi:c.kanji;}
 function renderCompare(c){
   const cv=$('#cmp');const text=targetText(c);const r=setupCanvas(cv,text);const ctx=cv.getContext('2d');
