@@ -86,7 +86,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
 .draw-tools{margin-top:16px}
 .draw-tools{display:flex;gap:10px;justify-content:center;margin-top:10px}
 .draw-tools button{flex:none;min-width:120px}
-#p-rows{display:flex;flex-direction:row-reverse;justify-content:center;align-items:flex-start;gap:14px;margin:8px 0;flex-wrap:wrap}
+#p-rows{display:flex;flex-direction:row-reverse;justify-content:safe center;align-items:flex-start;gap:12px;margin:8px 0;padding:0 4px 6px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .pcol{display:flex;flex-direction:column;align-items:center;gap:4px}
 .pcol .pch{font-family:var(--kfont);font-size:1.5rem;font-weight:600;color:var(--sub);line-height:1.2}
 .pcol canvas.draw{margin:0}
@@ -106,7 +106,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
 <body>
 <header>
   <h1>✏️ かんじ ふくしゅう</h1>
-  <span class="ver">v4.2</span>
+  <span class="ver">v4.3</span>
 </header>
 
 <main>
@@ -148,7 +148,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
       <p>「とうろく」タブで、まちがえた漢字を入れます。<b>ことば</b>（例：暑い）と<b>よみがな</b>（例：あつい）は必ず、<b>いみ</b>はあってもなくてもOKです。「🔍 じしょで しらべる」を押すと、入力した言葉をgoo辞書で開けるので、意味を確認して入れられます。</p>
       <p>「よみ」は漢字を見て読みを答えるモード（答えを見ると意味も出ます）、「かき」は読みと意味を見て漢字を書くモードです。カードをタップすると答えが出るので、「できた」「まだ」で自分で判定します。</p>
       <p>✍️「手がきのマス」をオンにすると、問題カードにマス目が出ます。ペンや指で字を書いてから「こたえを見る」を押すと、自分の字の下に正解の字がうすい赤で重なって出るので、見比べられます（字の正しさの自動判定はしません）。</p>
-      <p>✍️「まちがえたら 5回 れんしゅう」がオンだと、「まだ」を押した直後に、その漢字を漢字ノートのように縦5マスで書く練習画面に進みます。一番上のうすい字をなぞり、下の4マスは自分で書きます。結果画面やホームの🔥カードからもまとめて練習できます。</p>
+      <p>✍️「まちがえたら 5回 れんしゅう」がオンだと、「まだ」を押した直後に、その言葉を漢字ノートのように縦書きで5回書く練習画面に進みます。右はしの列のうすい字をなぞり、残り4列は自分で書きます。結果画面やホームの🔥カードからもまとめて練習できます。</p>
       <p>✏️ 登録した内容を直したいときは、「とうろく」タブの一覧で✏️を押すと入力欄に内容が入るので、書き直して「✔ なおす」を押します。</p>
       <p>🧪「ためしモード」をオンにすると、できた・まだの回数を記録せずに出題を試せます。登録が0件でも見本の漢字3つで動きます。動作確認用です。</p>
       <p>🔔 正解の音は、iPadのサイレントスイッチや消音中は鳴らないことがあります。</p>
@@ -223,7 +223,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
     <div class="tag">まちがえた かんじ</div>
     <div class="mid" id="p-word" style="font-size:clamp(2.2rem,10vw,3.6rem);font-weight:600">暑い</div>
     <div class="hint" id="p-yomi" style="margin-top:0">あつい</div>
-    <div class="label" style="text-align:center">上の うすい字を なぞって、下に 4回 書こう</div>
+    <div class="label" style="text-align:center">右はしの うすい字を なぞって、あと 4回 書こう</div>
     <div id="p-rows"></div>
     <div class="draw-tools"><button class="gray small" id="btn-p-clear">🧽 ぜんぶ けす</button><button class="blue" id="btn-p-next">つぎへ ▶︎</button></div>
   </div>
@@ -463,21 +463,22 @@ function renderPractice(){
 }
 function renderPracticeRows(){
   const c=findCard(prac.ids[prac.idx]);if(!c)return;
-  let chars=[...c.kanji].filter(ch=>KANJI_RE.test(ch));if(!chars.length)chars=[...c.kanji];
-  chars=chars.slice(0,6);
+  const chars=[...c.kanji].slice(0,6);const n=chars.length;
   const wrap=$('#p-rows');wrap.innerHTML='';prac.drawers=[];
-  // 1文字＝縦1列（上から5マス）。文字が複数なら右から左へ列を並べる（漢字ノートと同じ）
-  const cols=chars.length;
-  const byW=Math.floor((Math.max(240,wrap.clientWidth)-14*(cols-1))/cols);
-  const byH=Math.floor((window.innerHeight-380)/5);
-  const side=Math.max(52,Math.min(100,byW,byH));
-  chars.forEach(ch=>{
+  // 単語を縦1列（文字数ぶんのマスがつながる）に書く。その列を5回分、右から左へ並べる（漢字ノートと同じ）
+  const REPEAT=5;
+  const byW=Math.floor((Math.max(240,wrap.clientWidth)-12*(REPEAT-1))/REPEAT);
+  const byH=Math.floor((window.innerHeight-330)/n);
+  const side=Math.max(64,Math.min(110,byW,byH)); // 小さい画面では横スクロール
+  for(let k=0;k<REPEAT;k++){
     const col=document.createElement('div');col.className='pcol';
-    const lab=document.createElement('span');lab.className='pch';lab.textContent=ch;
+    const lab=document.createElement('span');lab.className='pch';lab.style.fontSize='.9rem';lab.textContent=k===0?'なぞる':(k+1)+'回め';
     const cv=document.createElement('canvas');cv.className='draw';
     col.appendChild(lab);col.appendChild(cv);wrap.appendChild(col);
-    const d=makeDrawer(cv);d.setup(5,side,[{i:0,ch,color:'rgba(120,120,120,.35)'}],true);prac.drawers.push(d);
-  });
+    const models=k===0?chars.map((ch,i)=>({i,ch,color:'rgba(120,120,120,.35)'})):null;
+    const d=makeDrawer(cv);d.setup(n,side,models,true);prac.drawers.push(d);
+  }
+  wrap.scrollLeft=wrap.scrollWidth; // 右はし（なぞる列）から見せる
 }
 function practiceNext(){
   if(!prac)return;
