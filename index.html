@@ -80,6 +80,10 @@ nav.bottom button.gray.cur{background:#fff;box-shadow:0 4px 0 var(--line);border
 .stamp{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8rem;pointer-events:none;opacity:0;transition:.15s}
 .stamp.show{opacity:.85}
 .qwrap{position:relative}
+.remain{font-weight:700;color:var(--accent-d);font-size:1.2rem}
+canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid var(--line);border-radius:12px;touch-action:none;cursor:crosshair}
+.draw-tools{display:flex;gap:10px;justify-content:center;margin-top:10px}
+.draw-tools button{flex:none;min-width:120px}
 .nb{display:inline-block;font-size:.95rem;background:#ffe3e6;color:var(--ng-d);border-radius:999px;padding:4px 12px;font-weight:600;white-space:nowrap}
 .item.nigate{border-color:#f3a3ab;background:#fff5f6}
 .item.nigate .k{color:var(--ng-d)}
@@ -93,7 +97,7 @@ nav.bottom button.gray.cur{background:#fff;box-shadow:0 4px 0 var(--line);border
 <body>
 <header>
   <h1>✏️ かんじ ふくしゅう</h1>
-  <span class="ver">v2</span>
+  <span class="ver">v3</span>
 </header>
 
 <main>
@@ -120,6 +124,8 @@ nav.bottom button.gray.cur{background:#fff;box-shadow:0 4px 0 var(--line);border
 
     <div class="toggle" id="tg-shuffle"><span>🔀 シャッフル（じゅんばんを まぜる）</span><div class="switch on"></div></div>
     <div class="toggle" id="tg-miss"><span>❌ 「まだ」の かんじだけ</span><div class="switch"></div></div>
+    <div class="toggle" id="tg-sound"><span>🔔 せいかいの おと</span><div class="switch on"></div></div>
+    <div class="toggle" id="tg-hand"><span>✍️ 手がきの マス（iPadのペン用）</span><div class="switch on"></div></div>
 
     <button id="btn-start" style="min-height:72px;font-size:1.4rem;margin-top:8px">▶︎ はじめる</button>
   </div>
@@ -129,6 +135,8 @@ nav.bottom button.gray.cur{background:#fff;box-shadow:0 4px 0 var(--line);border
     <div class="note">
       <p>「とうろく」タブで、まちがえた漢字を入れます。<b>ことば</b>（例：暑い）と<b>よみがな</b>（例：あつい）は必ず、<b>れい文</b>はあってもなくてもOKです。</p>
       <p>「よみ」は漢字を見て読みを答えるモード、「かき」は読みを見て漢字をノートに書くモードです。カードをタップすると答えが出るので、「できた」「まだ」で自分で判定します。</p>
+      <p>✍️「手がきのマス」をオンにすると、問題カードにマス目が出ます。ペンや指で字を書いてから「こたえを見る」を押すと、自分の字の下に正解の字がうすい赤で重なって出るので、見比べられます（字の正しさの自動判定はしません）。</p>
+      <p>🔔 正解の音は、iPadのサイレントスイッチや消音中は鳴らないことがあります。</p>
       <p>🔥「にがて」マークは、2回以上まちがえて、まだ「できた」の回数が追いついていない漢字につきます。「できた」を重ねるとマークは消えます。</p>
       <p>データはこの端末のブラウザ内に保存されます。別の端末に移すときは「とうろく」タブの一番下にある「データのうつしかえ」を使ってください。</p>
     </div>
@@ -137,7 +145,7 @@ nav.bottom button.gray.cur{background:#fff;box-shadow:0 4px 0 var(--line);border
 
 <!-- クイズ -->
 <section id="scr-quiz" class="screen">
-  <div class="progress"><span id="q-pos">1 / 10</span><span id="q-mode-tag"></span></div>
+  <div class="progress"><span id="q-pos">1 もんめ</span><span class="remain" id="q-remain">あと 10もん！</span><span id="q-mode-tag"></span></div>
   <div class="bar"><i id="q-bar"></i></div>
 
   <div class="qwrap">
@@ -147,13 +155,21 @@ nav.bottom button.gray.cur{background:#fff;box-shadow:0 4px 0 var(--line);border
         <div class="big" id="q-main">暑い</div>
         <div class="q-nb" id="q-nb"></div>
         <div class="hint" id="q-hint"></div>
-        <div class="tap">タップして こたえを見る</div>
+        <div id="draw-wrap" style="display:none">
+          <canvas class="draw" id="draw"></canvas>
+          <div class="draw-tools"><button class="gray small" id="btn-clear-draw">🧽 けす</button><button class="blue small" id="btn-reveal">こたえを 見る</button></div>
+        </div>
+        <div class="tap" id="q-tap">タップして こたえを見る</div>
       </div>
       <div id="q-back" style="display:none">
         <div class="tag">こたえ</div>
         <div class="big" id="a-main">あつい</div>
         <div class="mid" id="a-sub"></div>
         <div class="hint" id="a-hint"></div>
+        <div id="cmp-wrap" style="display:none">
+          <div class="label" style="text-align:center">きみの字と くらべてみよう（うすい赤が こたえ）</div>
+          <canvas class="draw" id="cmp"></canvas>
+        </div>
       </div>
     </div>
     <div class="stamp" id="stamp"></div>
@@ -237,8 +253,8 @@ let quiz=null; // {ids:[], idx, flipped, ok:[], ng:[]}
 let sortNew=true;
 
 function load(){
-  try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&Array.isArray(d.cards))return Object.assign({settings:{mode:'yomi',shuffle:true,onlyMiss:false}},d);}catch(e){}
-  return {cards:[],settings:{mode:'yomi',shuffle:true,onlyMiss:false}};
+  try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&Array.isArray(d.cards))d.settings=Object.assign({mode:'yomi',shuffle:true,onlyMiss:false,sound:true,hand:true},d.settings||{});return d;}catch(e){}
+  return {cards:[],settings:{mode:'yomi',shuffle:true,onlyMiss:false,sound:true,hand:true}};
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){toast('ほぞんできませんでした');}}
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove('show'),1600);}
@@ -270,6 +286,8 @@ function renderHome(){
   $$('#mode-seg button').forEach(b=>b.classList.toggle('on',b.dataset.mode===settings.mode));
   $('#tg-shuffle .switch').classList.toggle('on',!!settings.shuffle);
   $('#tg-miss .switch').classList.toggle('on',!!settings.onlyMiss);
+  $('#tg-sound .switch').classList.toggle('on',!!settings.sound);
+  $('#tg-hand .switch').classList.toggle('on',!!settings.hand);
   $('#btn-start').disabled=db.cards.length===0;
   const ng=nigateCards();
   $('#home-nigate').style.display=ng.length?'':'none';
@@ -279,11 +297,61 @@ $('#btn-nigate').addEventListener('click',()=>startQuiz(nigateCards().map(c=>c.i
 $$('#mode-seg button').forEach(b=>b.addEventListener('click',()=>{settings.mode=b.dataset.mode;save();renderHome();}));
 $('#tg-shuffle').addEventListener('click',()=>{settings.shuffle=!settings.shuffle;save();renderHome();});
 $('#tg-miss').addEventListener('click',()=>{settings.onlyMiss=!settings.onlyMiss;save();renderHome();});
+$('#tg-sound').addEventListener('click',()=>{settings.sound=!settings.sound;save();renderHome();if(settings.sound)pingpong();});
+$('#tg-hand').addEventListener('click',()=>{settings.hand=!settings.hand;save();renderHome();});
 $('#btn-start').addEventListener('click',()=>{
   let pool=settings.onlyMiss?missCards():db.cards.slice();
   if(settings.onlyMiss&&pool.length===0){toast('「まだ」の かんじが ないので ぜんぶ出します');pool=db.cards.slice();}
   startQuiz(pool.map(c=>c.id));
 });
+
+// ---- おと（Web Audioで合成。音ファイル不要） ----
+let actx=null;
+function getCtx(){try{if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();return actx;}catch(e){return null;}}
+function tone(freq,at,dur,vol){const c=getCtx();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=freq;
+  g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(vol||.3,at+.01);g.gain.exponentialRampToValueAtTime(.001,at+dur);
+  o.connect(g);g.connect(c.destination);o.start(at);o.stop(at+dur+.05);}
+function pingpong(){if(!settings.sound)return;const c=getCtx();if(!c)return;const t=c.currentTime;tone(1047,t,.18,.3);tone(1319,t+.15,.6,.3);}
+function fanfare(){if(!settings.sound)return;const c=getCtx();if(!c)return;const t=c.currentTime;[523,659,784,1047].forEach((f,i)=>tone(f,t+i*.13,i===3?.7:.18,.28));}
+
+// ---- 手がき ----
+const dcv=$('#draw'),dctx=dcv.getContext('2d');
+let dside=0,dcells=1,drawing=false,hasInk=false,lastPt=null;
+function setupCanvas(cv,text){
+  const n=Math.max(1,Math.min(6,[...text].length));
+  const avail=Math.max(200,$('#qcard').clientWidth-44);
+  const side=Math.max(60,Math.min(180,Math.floor(avail/n)));
+  const dpr=window.devicePixelRatio||1;
+  cv.style.width=(side*n)+'px';cv.style.height=side+'px';
+  cv.width=Math.round(side*n*dpr);cv.height=Math.round(side*dpr);
+  const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,side*n,side);
+  for(let i=0;i<n;i++){const x=i*side;
+    ctx.strokeStyle='#e8dcc4';ctx.lineWidth=1.5;ctx.setLineDash([]);ctx.strokeRect(x+.75,.75,side-1.5,side-1.5);
+    ctx.setLineDash([5,5]);ctx.strokeStyle='#d9d3c5';ctx.beginPath();ctx.moveTo(x+side/2,0);ctx.lineTo(x+side/2,side);ctx.moveTo(x,side/2);ctx.lineTo(x+side,side/2);ctx.stroke();ctx.setLineDash([]);}
+  return {side,n};
+}
+function resetDraw(text){const r=setupCanvas(dcv,text);dside=r.side;dcells=r.n;hasInk=false;}
+function pos(e){const r=dcv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top,p:(e.pointerType==='pen'&&e.pressure>0)?e.pressure:0.5};}
+dcv.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();drawing=true;lastPt=pos(e);dcv.setPointerCapture(e.pointerId);
+  dctx.fillStyle='#222';dctx.beginPath();dctx.arc(lastPt.x,lastPt.y,dside/40,0,Math.PI*2);dctx.fill();hasInk=true;});
+dcv.addEventListener('pointermove',e=>{if(!drawing)return;e.preventDefault();const q=pos(e);
+  dctx.strokeStyle='#222';dctx.lineCap='round';dctx.lineJoin='round';dctx.lineWidth=dside/22*(0.6+q.p);
+  dctx.beginPath();dctx.moveTo(lastPt.x,lastPt.y);dctx.lineTo(q.x,q.y);dctx.stroke();lastPt=q;});
+['pointerup','pointercancel','pointerleave'].forEach(ev=>dcv.addEventListener(ev,e=>{drawing=false;}));
+dcv.addEventListener('click',e=>e.stopPropagation());
+$('#btn-clear-draw').addEventListener('click',e=>{e.stopPropagation();const c=cur();if(c)resetDraw(targetText(c));});
+$('#btn-reveal').addEventListener('click',e=>{e.stopPropagation();flip();});
+function targetText(c){return settings.mode==='yomi'?c.yomi:c.kanji;}
+function renderCompare(c){
+  const cv=$('#cmp');const text=targetText(c);const r=setupCanvas(cv,text);const ctx=cv.getContext('2d');
+  const chars=[...text];
+  ctx.fillStyle='rgba(226,85,99,.38)';ctx.font=`600 ${Math.round(r.side*.78)}px "Klee One","UD Digi Kyokasho N-R","Hiragino Mincho ProN",serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  chars.slice(0,r.n).forEach((ch,i)=>ctx.fillText(ch,i*r.side+r.side/2,r.side/2+r.side*.04));
+  if(hasInk){ctx.drawImage(dcv,0,0,dcv.width,dcv.height,0,0,r.side*r.n,r.side);}
+  ctx.globalAlpha=1;
+}
 
 // ---- クイズ ----
 function startQuiz(ids){
@@ -301,7 +369,8 @@ function maskHint(c){
 function renderQ(){
   const c=cur();if(!c){finish();return;}
   const n=quiz.ids.length;
-  $('#q-pos').textContent=(quiz.idx+1)+' / '+n;
+  $('#q-pos').textContent=(quiz.idx+1)+' もんめ';
+  $('#q-remain').textContent='あと '+(n-quiz.idx)+'もん！';
   $('#q-bar').style.width=((quiz.idx)/n*100)+'%';
   $('#q-mode-tag').textContent=settings.mode==='yomi'?'よみ':'かき';
   const yomiMode=settings.mode==='yomi';
@@ -309,6 +378,10 @@ function renderQ(){
   $('#q-main').textContent=yomiMode?c.kanji:c.yomi;
   $('#q-hint').textContent=yomiMode?'':maskHint(c);
   $('#q-nb').innerHTML=nbHtml(c);
+  $('#draw-wrap').style.display=settings.hand?'':'none';
+  $('#q-tap').textContent=settings.hand?'マスに 書いてから「こたえを 見る」':'タップして こたえを見る';
+  if(settings.hand)resetDraw(targetText(c));
+  $('#cmp-wrap').style.display='none';
   $('#a-main').textContent=yomiMode?c.yomi:c.kanji;
   $('#a-sub').textContent=yomiMode?c.kanji:c.yomi;
   $('#a-hint').textContent=c.hint||'';
@@ -316,16 +389,19 @@ function renderQ(){
   $('#q-front').style.display='';$('#q-back').style.display='none';
   $('#judge').style.visibility='hidden';
 }
-$('#qcard').addEventListener('click',()=>{
+function flip(){
   if(!quiz||quiz.flipped)return;
+  const c=cur();
   quiz.flipped=true;
+  if(settings.hand&&c){renderCompare(c);$('#cmp-wrap').style.display='';}
   $('#q-front').style.display='none';$('#q-back').style.display='';
   $('#judge').style.visibility='visible';
-});
+}
+$('#qcard').addEventListener('click',flip);
 function judge(isOk){
   if(!quiz||!quiz.flipped)return;
   const c=cur();
-  if(isOk){c.ok=(c.ok||0)+1;c.last='ok';quiz.ok.push(c.id);}else{c.miss=(c.miss||0)+1;c.last='ng';quiz.ng.push(c.id);}
+  if(isOk){pingpong();c.ok=(c.ok||0)+1;c.last='ok';quiz.ok.push(c.id);}else{c.miss=(c.miss||0)+1;c.last='ng';quiz.ng.push(c.id);}
   save();
   const st=$('#stamp');st.textContent=isOk?'⭕️':'❌';st.classList.add('show');
   setTimeout(()=>{st.classList.remove('show');quiz.idx++;if(quiz.idx>=quiz.ids.length)finish();else renderQ();},350);
@@ -335,7 +411,7 @@ $('#judge .ng').addEventListener('click',()=>judge(false));
 $('#btn-quit').addEventListener('click',()=>{if(quiz.ok.length+quiz.ng.length>0)finish();else{quiz=null;show('home');}});
 document.addEventListener('keydown',e=>{
   if(!quiz||!$('#scr-quiz').classList.contains('active'))return;
-  if(e.key===' '||e.key==='Enter'){e.preventDefault();$('#qcard').click();}
+  if(e.key===' '||e.key==='Enter'){e.preventDefault();flip();}
   if(quiz.flipped&&(e.key==='ArrowRight'||e.key==='o'))judge(true);
   if(quiz.flipped&&(e.key==='ArrowLeft'||e.key==='x'))judge(false);
 });
@@ -344,6 +420,7 @@ document.addEventListener('keydown',e=>{
 function finish(){
   const ok=quiz.ok.length,ng=quiz.ng.length;
   $('#r-ok').textContent=ok;$('#r-ng').textContent=ng;
+  if(ng===0&&ok>0)fanfare();
   $('#r-title').textContent=ng===0&&ok>0?'🎉 ぜんぶ できた！':ok>=ng?'👍 いいちょうし！':'💪 もういちど がんばろう';
   const list=$('#r-list');list.innerHTML='';
   quiz.ng.forEach(id=>{const c=db.cards.find(x=>x.id===id);if(!c)return;
