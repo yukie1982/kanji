@@ -97,7 +97,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
 <body>
 <header>
   <h1>✏️ かんじ ふくしゅう</h1>
-  <span class="ver">v3.2</span>
+  <span class="ver">v3.3</span>
 </header>
 
 <main>
@@ -332,13 +332,27 @@ function setupCanvas(cv,text){
   return {side,n};
 }
 function resetDraw(text){const r=setupCanvas(dcv,text);dside=r.side;dcells=r.n;hasInk=false;}
-function pos(e){const r=dcv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top,p:(e.pointerType==='pen'&&e.pressure>0)?e.pressure:0.5};}
-dcv.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();drawing=true;lastPt=pos(e);
-  dctx.fillStyle='#222';dctx.beginPath();dctx.arc(lastPt.x,lastPt.y,dside/40,0,Math.PI*2);dctx.fill();hasInk=true;});
-dcv.addEventListener('pointermove',e=>{if(!drawing)return;e.preventDefault();const q=pos(e);
-  dctx.strokeStyle='#222';dctx.lineCap='round';dctx.lineJoin='round';dctx.lineWidth=dside/22*(0.6+q.p);
-  dctx.beginPath();dctx.moveTo(lastPt.x,lastPt.y);dctx.lineTo(q.x,q.y);dctx.stroke();lastPt=q;});
-['pointerup','pointercancel','pointerleave'].forEach(ev=>dcv.addEventListener(ev,e=>{drawing=false;}));
+// 線を描く：速く書いても途切れないよう、間引かれた座標（coalesced events）も全部使い、
+// 筆圧が低くても最低限の太さを確保する。ペンがマスの外に出ても指を離すまで描き続ける。
+let activeId=null;
+function pp(e){const r=dcv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top,p:(e.pointerType==='pen'&&e.pressure>0)?Math.max(.45,Math.min(1,e.pressure)):0.6};}
+function lw(p){return dside/20*(0.55+0.7*p);}
+function strokeStart(q){drawing=true;lastPt=q;dctx.fillStyle='#222';dctx.beginPath();dctx.arc(q.x,q.y,lw(q.p)/2,0,Math.PI*2);dctx.fill();hasInk=true;}
+function strokeTo(q){if(!drawing||!lastPt)return;const mx=(lastPt.x+q.x)/2,my=(lastPt.y+q.y)/2;
+  dctx.strokeStyle='#222';dctx.lineCap='round';dctx.lineJoin='round';dctx.lineWidth=lw(q.p);
+  dctx.beginPath();dctx.moveTo(lastPt.x,lastPt.y);dctx.lineTo(q.x,q.y);dctx.stroke();lastPt=q;}
+function strokeEnd(){drawing=false;lastPt=null;activeId=null;}
+let lastT=0;
+dcv.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();
+  if(drawing){ if(e.pointerType==='touch'&&Date.now()-lastT<1500)return; /* ペンで書いている最中の手のひら等は無視 */ strokeEnd(); }
+  activeId=e.pointerId;lastT=Date.now();strokeStart(pp(e));},{passive:false});
+function onMove(e){if(!drawing||e.pointerId!==activeId)return;e.preventDefault();lastT=Date.now();
+  const evs=(e.getCoalescedEvents&&e.getCoalescedEvents().length)?e.getCoalescedEvents():[e];
+  for(const ev of evs)strokeTo(pp(ev));}
+function onUp(e){if(e.pointerId!==activeId)return;strokeEnd();}
+window.addEventListener('pointermove',onMove,{passive:false});
+window.addEventListener('pointerup',onUp);
+window.addEventListener('pointercancel',onUp);
 dcv.addEventListener('click',e=>e.stopPropagation());
 function onTap(el,fn){
   el.addEventListener('click',e=>{e.stopPropagation();fn();});
