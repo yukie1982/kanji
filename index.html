@@ -86,9 +86,10 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
 .draw-tools{margin-top:16px}
 .draw-tools{display:flex;gap:10px;justify-content:center;margin-top:10px}
 .draw-tools button{flex:none;min-width:120px}
-.prow{display:flex;align-items:center;gap:8px;margin:8px 0;justify-content:center}
-.prow .pch{font-family:var(--kfont);font-size:1.7rem;font-weight:600;min-width:1.3em;text-align:center;color:var(--sub)}
-.prow canvas.draw{margin:0}
+#p-rows{display:flex;flex-direction:row-reverse;justify-content:center;align-items:flex-start;gap:14px;margin:8px 0;flex-wrap:wrap}
+.pcol{display:flex;flex-direction:column;align-items:center;gap:4px}
+.pcol .pch{font-family:var(--kfont);font-size:1.5rem;font-weight:600;color:var(--sub);line-height:1.2}
+.pcol canvas.draw{margin:0}
 .item .edit{background:transparent;color:var(--sub);box-shadow:none;min-height:40px;padding:6px 8px;font-size:1.2rem;flex:none}
 .item .edit:active{transform:none}
 .editing{border-color:var(--blue)!important;background:#eef4fd}
@@ -105,7 +106,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
 <body>
 <header>
   <h1>✏️ かんじ ふくしゅう</h1>
-  <span class="ver">v4</span>
+  <span class="ver">v4.1</span>
 </header>
 
 <main>
@@ -147,7 +148,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
       <p>「とうろく」タブで、まちがえた漢字を入れます。<b>ことば</b>（例：暑い）と<b>よみがな</b>（例：あつい）は必ず、<b>れい文</b>はあってもなくてもOKです。</p>
       <p>「よみ」は漢字を見て読みを答えるモード、「かき」は読みを見て漢字をノートに書くモードです。カードをタップすると答えが出るので、「できた」「まだ」で自分で判定します。</p>
       <p>✍️「手がきのマス」をオンにすると、問題カードにマス目が出ます。ペンや指で字を書いてから「こたえを見る」を押すと、自分の字の下に正解の字がうすい赤で重なって出るので、見比べられます（字の正しさの自動判定はしません）。</p>
-      <p>✍️「まちがえたら 5回 れんしゅう」がオンだと、「まだ」を押した直後に、その漢字を1文字ずつ5マスで書く練習画面に進みます。1マス目のうすい字をなぞり、残り4マスは自分で書きます。結果画面やホームの🔥カードからもまとめて練習できます。</p>
+      <p>✍️「まちがえたら 5回 れんしゅう」がオンだと、「まだ」を押した直後に、その漢字を漢字ノートのように縦5マスで書く練習画面に進みます。一番上のうすい字をなぞり、下の4マスは自分で書きます。結果画面やホームの🔥カードからもまとめて練習できます。</p>
       <p>✏️ 登録した内容を直したいときは、「とうろく」タブの一覧で✏️を押すと入力欄に内容が入るので、書き直して「✔ なおす」を押します。</p>
       <p>🧪「ためしモード」をオンにすると、できた・まだの回数を記録せずに出題を試せます。登録が0件でも見本の漢字3つで動きます。動作確認用です。</p>
       <p>🔔 正解の音は、iPadのサイレントスイッチや消音中は鳴らないことがあります。</p>
@@ -222,7 +223,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
     <div class="tag">まちがえた かんじ</div>
     <div class="mid" id="p-word" style="font-size:clamp(2.2rem,10vw,3.6rem);font-weight:600">暑い</div>
     <div class="hint" id="p-yomi" style="margin-top:0">あつい</div>
-    <div class="label" style="text-align:center">1マス目の うすい字を なぞって、のこりは 自分で 書こう</div>
+    <div class="label" style="text-align:center">上の うすい字を なぞって、下に 4回 書こう</div>
     <div id="p-rows"></div>
     <div class="draw-tools"><button class="gray small" id="btn-p-clear">🧽 ぜんぶ けす</button><button class="blue" id="btn-p-next">つぎへ ▶︎</button></div>
   </div>
@@ -380,22 +381,25 @@ function fanfare(){playBuf(bufFan,auFan);}
 // ペンがマス外に出ても指を離すまで描き続ける。手のひらの誤タッチは無視。
 const KFONT='"Klee One","UD Digi Kyokasho N-R","Hiragino Mincho ProN",serif';
 let activeDrawer=null;
-function drawGrid(cv,n,side,models){
+// マス目を描く。縦書き（vertical=true）なら上から下へ n マス並べる
+function drawGrid(cv,n,side,models,vertical){
   const dpr=window.devicePixelRatio||1;
-  cv.style.width=(side*n)+'px';cv.style.height=side+'px';
-  cv.width=Math.round(side*n*dpr);cv.height=Math.round(side*dpr);
+  const W=vertical?side:side*n,H=vertical?side*n:side;
+  cv.style.width=W+'px';cv.style.height=H+'px';
+  cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
   const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,side*n,side);
-  for(let i=0;i<n;i++){const x=i*side;
-    ctx.strokeStyle='#e8dcc4';ctx.lineWidth=1.5;ctx.setLineDash([]);ctx.strokeRect(x+.75,.75,side-1.5,side-1.5);
-    ctx.setLineDash([5,5]);ctx.strokeStyle='#d9d3c5';ctx.beginPath();ctx.moveTo(x+side/2,0);ctx.lineTo(x+side/2,side);ctx.moveTo(x,side/2);ctx.lineTo(x+side,side/2);ctx.stroke();ctx.setLineDash([]);}
+  ctx.clearRect(0,0,W,H);
+  const cell=i=>vertical?{x:0,y:i*side}:{x:i*side,y:0};
+  for(let i=0;i<n;i++){const {x,y}=cell(i);
+    ctx.strokeStyle='#e8dcc4';ctx.lineWidth=1.5;ctx.setLineDash([]);ctx.strokeRect(x+.75,y+.75,side-1.5,side-1.5);
+    ctx.setLineDash([5,5]);ctx.strokeStyle='#d9d3c5';ctx.beginPath();ctx.moveTo(x+side/2,y);ctx.lineTo(x+side/2,y+side);ctx.moveTo(x,y+side/2);ctx.lineTo(x+side,y+side/2);ctx.stroke();ctx.setLineDash([]);}
   if(models){ctx.font=`600 ${Math.round(side*.78)}px ${KFONT}`;ctx.textAlign='center';ctx.textBaseline='middle';
-    models.forEach(m=>{ctx.fillStyle=m.color;ctx.fillText(m.ch,m.i*side+side/2,side/2+side*.04);});}
+    models.forEach(m=>{const {x,y}=cell(m.i);ctx.fillStyle=m.color;ctx.fillText(m.ch,x+side/2,y+side/2+side*.04);});}
   return ctx;
 }
 function makeDrawer(cv){
-  const d={cv,ctx:cv.getContext('2d'),side:0,n:1,hasInk:false,drawing:false,lastPt:null,activeId:null,lastT:0};
-  d.setup=(n,side,models)=>{d.ctx=drawGrid(cv,n,side,models);d.n=n;d.side=side;d.hasInk=false;};
+  const d={cv,ctx:cv.getContext('2d'),side:0,n:1,vertical:false,hasInk:false,drawing:false,lastPt:null,activeId:null,lastT:0};
+  d.setup=(n,side,models,vertical)=>{d.ctx=drawGrid(cv,n,side,models,vertical);d.n=n;d.side=side;d.vertical=!!vertical;d.hasInk=false;};
   const pp=e=>{const r=cv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top,p:(e.pointerType==='pen'&&e.pressure>0)?Math.max(.45,Math.min(1,e.pressure)):0.6};};
   const lw=p=>d.side/20*(0.55+0.7*p);
   d.start=q=>{d.drawing=true;d.lastPt=q;d.ctx.fillStyle='#222';d.ctx.beginPath();d.ctx.arc(q.x,q.y,lw(q.p)/2,0,Math.PI*2);d.ctx.fill();d.hasInk=true;};
@@ -419,7 +423,7 @@ window.addEventListener('pointercancel',e=>{if(activeDrawer&&e.pointerId===activ
 function cellSide(n,avail,maxSide){return Math.max(56,Math.min(maxSide,Math.floor(avail/n)));}
 // 問題カードのマス
 const drawer=makeDrawer($('#draw'));
-function resetDraw(text){const n=Math.max(1,Math.min(6,[...text].length));const side=cellSide(n,Math.max(200,$('#qcard').clientWidth-44),180);drawer.setup(n,side,null);}
+function resetDraw(text){const n=Math.max(1,Math.min(6,[...text].length));const side=Math.max(64,Math.min(150,Math.floor(Math.max(300,window.innerHeight*0.42)/n),$('#qcard').clientWidth-44));drawer.setup(n,side,null,true);}
 let tapGuard=0;
 function onTap(el,fn){
   const go=e=>{e.stopPropagation();if(e.cancelable)e.preventDefault();const now=Date.now();if(now-tapGuard<600)return;tapGuard=now;fn();};
@@ -434,8 +438,9 @@ onTap($('#btn-reveal'),()=>flip());
 function targetText(c){return settings.mode==='yomi'?c.yomi:c.kanji;}
 function renderCompare(c){
   const cv=$('#cmp');const chars=[...targetText(c)].slice(0,drawer.n);
-  const ctx=drawGrid(cv,drawer.n,drawer.side,chars.map((ch,i)=>({i,ch,color:'rgba(226,85,99,.38)'})));
-  if(drawer.hasInk){ctx.drawImage(drawer.cv,0,0,drawer.cv.width,drawer.cv.height,0,0,drawer.side*drawer.n,drawer.side);}
+  const ctx=drawGrid(cv,drawer.n,drawer.side,chars.map((ch,i)=>({i,ch,color:'rgba(226,85,99,.38)'})),drawer.vertical);
+  const W=drawer.vertical?drawer.side:drawer.side*drawer.n,H=drawer.vertical?drawer.side*drawer.n:drawer.side;
+  if(drawer.hasInk){ctx.drawImage(drawer.cv,0,0,drawer.cv.width,drawer.cv.height,0,0,W,H);}
 }
 
 // ---- れんしゅう（まちがえた漢字を1文字ずつ5マスで書く） ----
@@ -460,13 +465,17 @@ function renderPracticeRows(){
   let chars=[...c.kanji].filter(ch=>KANJI_RE.test(ch));if(!chars.length)chars=[...c.kanji];
   chars=chars.slice(0,6);
   const wrap=$('#p-rows');wrap.innerHTML='';prac.drawers=[];
-  const avail=Math.max(240,wrap.clientWidth-56);const side=cellSide(5,avail,110);
+  // 1文字＝縦1列（上から5マス）。文字が複数なら右から左へ列を並べる（漢字ノートと同じ）
+  const cols=chars.length;
+  const byW=Math.floor((Math.max(240,wrap.clientWidth)-14*(cols-1))/cols);
+  const byH=Math.floor((window.innerHeight-380)/5);
+  const side=Math.max(52,Math.min(100,byW,byH));
   chars.forEach(ch=>{
-    const row=document.createElement('div');row.className='prow';
+    const col=document.createElement('div');col.className='pcol';
     const lab=document.createElement('span');lab.className='pch';lab.textContent=ch;
     const cv=document.createElement('canvas');cv.className='draw';
-    row.appendChild(lab);row.appendChild(cv);wrap.appendChild(row);
-    const d=makeDrawer(cv);d.setup(5,side,[{i:0,ch,color:'rgba(120,120,120,.35)'}]);prac.drawers.push(d);
+    col.appendChild(lab);col.appendChild(cv);wrap.appendChild(col);
+    const d=makeDrawer(cv);d.setup(5,side,[{i:0,ch,color:'rgba(120,120,120,.35)'}],true);prac.drawers.push(d);
   });
 }
 function practiceNext(){
