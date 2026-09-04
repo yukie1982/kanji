@@ -106,7 +106,7 @@ canvas.draw{display:block;margin:10px auto 0;background:#fff;border:2px solid va
 <body>
 <header>
   <h1>✏️ かんじ ふくしゅう</h1>
-  <span class="ver">v4.3</span>
+  <span class="ver">v4.4</span>
 </header>
 
 <main>
@@ -424,7 +424,7 @@ window.addEventListener('pointercancel',e=>{if(activeDrawer&&e.pointerId===activ
 function cellSide(n,avail,maxSide){return Math.max(56,Math.min(maxSide,Math.floor(avail/n)));}
 // 問題カードのマス
 const drawer=makeDrawer($('#draw'));
-function resetDraw(text){const n=Math.max(1,Math.min(6,[...text].length));const side=Math.max(64,Math.min(150,Math.floor(Math.max(300,window.innerHeight*0.42)/n),$('#qcard').clientWidth-44));drawer.setup(n,side,null,true);}
+function resetDraw(text){const n=Math.max(1,Math.min(6,[...text].length));const side=cellSide(n,Math.max(200,$('#qcard').clientWidth-44),180);drawer.setup(n,side,null,false);} // 問題カードは横並び・大きめ（v4と同じ）
 let tapGuard=0;
 function onTap(el,fn){
   const go=e=>{e.stopPropagation();if(e.cancelable)e.preventDefault();const now=Date.now();if(now-tapGuard<600)return;tapGuard=now;fn();};
